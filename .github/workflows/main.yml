@@ -1,4 +1,4 @@
-name: Deploy to Server
+name: BuildFile
 
 on:
   push:
@@ -9,19 +9,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - name: use cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
         run: |
           cargo build --release
 
-      - name: Deploy
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-        run: |
-          echo "$SSH_PRIVATE_KEY" > private_key
-          chmod 600 private_key
-          scp -i private_key -o StrictHostKeyChecking=no target/release/discord_hub_bot $SSH_USER@$SSH_HOST:/home/ubuntu/deploy
+      - name: 'Upload build target'
+        uses: actions/upload-artifact@v4
+        with:
+          name: discord_hub_bot
+          path: |
+            ./target/release/discord_hub_bot*
+            !./target/release/shuba.pdb
+            !./target/release/shuba.d
+          retention-days: 30
