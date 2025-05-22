@@ -1,15 +1,19 @@
 mod hub_system;
+mod cmd_system;
 mod utils;
 
 pub use anyhow::Result;
-use serenity::all::StandardFramework;
 pub use serenity::prelude::*;
+use songbird::SerenityInit;
 pub use utils::*;
 
-/// Discord bot token
-pub const TOKEN: &str = include_str!("../.token");
+pub struct HttpKey;
 
-pub async fn run() -> Result<()> {
+impl TypeMapKey for HttpKey {
+    type Value = reqwest::Client;
+}
+
+pub async fn run(token: String) -> Result<()> {
     // 成员加入/离开/更新
     let gateway = GatewayIntents::GUILD_MEMBERS |
         // 封禁/解封成员
@@ -21,12 +25,17 @@ pub async fn run() -> Result<()> {
         // 用户在线状态
         GatewayIntents::GUILD_PRESENCES|
         // 读取消息内容
-        GatewayIntents::MESSAGE_CONTENT;
-    // todo 占位符
-    let command_system = StandardFramework::new();
-    let mut client = Client::builder(TOKEN, gateway)
+        GatewayIntents::MESSAGE_CONTENT|
+        // 直接消息
+        GatewayIntents::DIRECT_MESSAGES
+        ;
+
+
+    let mut client =Client::builder(token,gateway)
         .event_handler(hub_system::GuildMessagesHandler)
-        .framework(command_system)
+        .framework(cmd_system::frame_work())
+        .register_songbird()
+        .type_map_insert::<HttpKey>(reqwest::Client::new())
         .await?;
 
     if let Err(why) = client.start().await {
