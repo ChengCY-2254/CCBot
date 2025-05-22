@@ -1,4 +1,5 @@
 //! This file contains the implementation of the HubSystem struct and its associated methods.
+//! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
 use crate::HttpKey;
 use anyhow::Context;
@@ -153,7 +154,7 @@ pub async fn play_music(
     Err(anyhow::anyhow!("出现异常，无法播放。"))
 }
 
-#[poise::command(slash_command,required_permissions = "ADMINISTRATOR")]
+#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
 async fn join(
     ctx: PoiseContext<'_>,
     #[channel_types("Voice")] channel: GuildChannel,
@@ -197,7 +198,7 @@ impl EventHandler for TrackErrorNotifier {
     }
 }
 
-#[poise::command(slash_command,required_permissions = "ADMINISTRATOR")]
+#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
 async fn leave(
     ctx: PoiseContext<'_>,
     #[channel_types("Voice")] channel: GuildChannel,
@@ -226,6 +227,28 @@ async fn leave(
     Ok(())
 }
 
+#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
+async fn stop(
+    ctx: PoiseContext<'_>,
+    #[channel_types("Voice")] channel: GuildChannel,
+) -> crate::Result<()> {
+    let guild_id = channel.guild_id;
+    let manager = songbird::get(ctx.serenity_context())
+        .await
+        .with_context(|| "语音客户端初始化中")?
+        .clone();
+
+    let cell = manager.get(guild_id).with_context(|| "找不到对应的频道")?;
+    {
+        let mut handler = cell.lock().await;
+        handler.stop();
+        let response = CreateReply::default().content("已停止播放").ephemeral(true);
+        ctx.send(response).await?;
+    }
+
+    Ok(())
+}
+
 pub fn frame_work() -> poise::Framework<Data, Error> {
     log::info!("create framework");
     let framework: poise::Framework<Data, anyhow::Error> = poise::Framework::builder()
@@ -243,6 +266,7 @@ pub fn frame_work() -> poise::Framework<Data, Error> {
                 play_music(),
                 join(),
                 leave(),
+                stop(),
             ],
             manual_cooldowns: false,
             ..Default::default()
