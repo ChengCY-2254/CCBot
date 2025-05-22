@@ -8,7 +8,7 @@ use lazy_static::lazy_static;
 use poise::CreateReply;
 use serenity::all::{ActivityData, GuildChannel, MessageBuilder};
 use serenity::async_trait;
-use songbird::input::{YoutubeDl};
+use songbird::input::YoutubeDl;
 use songbird::{Event, EventContext, EventHandler, TrackEvent};
 use std::ops::Deref;
 
@@ -142,10 +142,10 @@ pub async fn play_music(
 
         log::info!("获取语音频道成功，即将开始推流");
         let src = YoutubeDl::new(http_client, url);
-        
+
         log::info!("获取YoutubeDl成功");
 
-        let _ = handler.play_input(src.clone().into());
+        let _trace = handler.play_input(src.clone().into());
 
         ctx.say("开始播放".to_string()).await?;
         return Ok(());
@@ -153,7 +153,7 @@ pub async fn play_music(
     Err(anyhow::anyhow!("出现异常，无法播放。"))
 }
 
-#[poise::command(slash_command)]
+#[poise::command(slash_command,required_permissions = "ADMINISTRATOR")]
 async fn join(
     ctx: PoiseContext<'_>,
     #[channel_types("Voice")] channel: GuildChannel,
@@ -197,7 +197,7 @@ impl EventHandler for TrackErrorNotifier {
     }
 }
 
-#[poise::command(slash_command)]
+#[poise::command(slash_command,required_permissions = "ADMINISTRATOR")]
 async fn leave(
     ctx: PoiseContext<'_>,
     #[channel_types("Voice")] channel: GuildChannel,
@@ -214,9 +214,15 @@ async fn leave(
         if let Err(why) = manager.remove(guild_id).await {
             log::error!("Error leaving channel: {:?}", why);
             ctx.say("离开语音频道失败").await?;
+            return Err(anyhow::anyhow!("离开语音频道失败"));
         };
     }
-
+    ctx.send(
+        CreateReply::default()
+            .ephemeral(true)
+            .content(format!("已离开频道 {}", channel.name)),
+    )
+    .await?;
     Ok(())
 }
 
