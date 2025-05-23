@@ -78,17 +78,21 @@ impl EventHandler for AIMessageHandler {
             .map(|mentions| mentions.id)
             .any(|id| id == ctx.cache.current_user().id)
         {
+            log::info!("用户 {} 提及了机器人", new_message.author);
+            log::info!("内容是 {}",new_message.content);
+            
             let mut bot_message = new_message
                 .channel_id
                 .say(&ctx, "请稍等，我正在思考...")
                 .await
                 .unwrap();
-
+            log::trace!("开始发送思考消息");
             // 广播正在思考
             new_message.channel_id.broadcast_typing(&ctx).await.unwrap();
+            log::trace!("开始广播思考消息");
             let select = GetMessages::new().limit(50).before(new_message.id);
             // 获取历史消息
-            let history = new_message
+            let history:Vec<Message> = new_message
                 .channel_id
                 .messages(&ctx, select)
                 .await
@@ -97,6 +101,7 @@ impl EventHandler for AIMessageHandler {
                 .filter(|msg| msg.author.id == user_id || msg.author.id == bot_id)
                 .cloned()
                 .collect();
+            log::trace!("已获取历史消息记录，共计 {} 条",history.len());
             
             let content = &new_message.content;
 
@@ -104,12 +109,14 @@ impl EventHandler for AIMessageHandler {
             let response = {
                 let http_client = ctx.data.read().await.get::<HttpKey>().cloned().unwrap();
                 let aiconfig = self.inner.lock().await;
+                log::info!("开始向服务器请求回复");
                 aiconfig
                     .chat(&http_client, content, history)
                     .await
                     .context("Error when chat")
+                
             };
-
+            log::info!("服务器回复成功");
             match response {
                 Ok(response) => {
                     //success
