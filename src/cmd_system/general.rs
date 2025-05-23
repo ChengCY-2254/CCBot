@@ -1,11 +1,12 @@
 //! This file contains the implementation of the HubSystem struct and its associated methods.
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
+use crate::create_ephemeral_reply;
 use chrono::FixedOffset;
 use futures::{Stream, StreamExt};
 use lazy_static::lazy_static;
 use poise::CreateReply;
-use serenity::all::{ActivityData, MessageBuilder};
+use serenity::all::{ActivityData, GetMessages, MessageBuilder};
 use std::ops::Deref;
 
 lazy_static! {
@@ -106,4 +107,34 @@ pub async fn autocomplete_activity_type(
     futures::stream::iter(&["playing", "listening", "streaming", "watching", "custom"])
         .filter(move |name| futures::future::ready(name.starts_with(partial)))
         .map(|name| name.to_string())
+}
+
+/// 清除消息的命令
+#[poise::command(
+    slash_command,
+    prefix_command,
+    aliases("clean"),
+    required_permissions = "MANAGE_MESSAGES"
+)]
+pub async fn clean_messages(
+    ctx: PoiseContext<'_>,
+    #[description = "清除的消息数量"] count: u8,
+) -> crate::Result<()> {
+    let messages = ctx
+        .channel_id()
+        .messages(ctx.serenity_context(), GetMessages::new().limit(count))
+        .await?;
+    
+    if messages.is_empty() {
+        let response = create_ephemeral_reply("没有找到可删除的消息");
+        ctx.send(response).await?;
+    } else {
+        for message in &messages {
+            message.delete(ctx.serenity_context()).await?;
+        }
+        let response = create_ephemeral_reply(format!("已删除{}条消息", messages.len()));
+
+        ctx.send(response).await?;
+    }
+    Ok(())
 }

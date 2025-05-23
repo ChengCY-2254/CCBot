@@ -1,5 +1,6 @@
 //! 这里存放系统的一些工具函数
 
+use poise::CreateReply;
 use serde::de::DeserializeOwned;
 use std::io::BufReader;
 use tokio::runtime::Runtime;
@@ -17,4 +18,10 @@ pub async fn read_file<P: AsRef<std::path::Path>, T: DeserializeOwned>(
     let reader = BufReader::new(file);
     let data = serde_json::from_reader(reader)?;
     Ok(data)
+}
+
+/// 创建一个仅用户可见的消息
+#[inline]
+pub fn create_ephemeral_reply(content: impl Into<String>) -> CreateReply {
+    CreateReply::default().content(content).ephemeral(true)
 }

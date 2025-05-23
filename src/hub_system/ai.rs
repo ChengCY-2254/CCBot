@@ -83,25 +83,11 @@ impl EventHandler for AIMessageHandler {
             log::info!("内容是 {}", new_message.content);
 
             log::trace!("开始发送思考消息");
-            let mut bot_message = new_message
-                .channel_id
-                .say(&ctx, "请稍等，我正在思考...")
-                .await
-                .unwrap();
 
-            let select = GetMessages::new().limit(50).before(new_message.id);
+            let mut bot_message = Self::send_thinking_message(&ctx, &new_message).await;
+
             // 获取历史消息
-            let history: Vec<Message> = new_message
-                .channel_id
-                .messages(&ctx, select)
-                .await
-                .unwrap()
-                .iter()
-                .filter(|msg| msg.author.id == user_id || msg.author.bot)
-                //获取开头不为`/`的消息，也就是排除命令内容
-                .filter(|msg| !msg.content.starts_with("/"))
-                .cloned()
-                .collect();
+            let history = Self::fetch_history(&ctx, &new_message, user_id).await;
             log::info!("已获取历史消息记录，共计 {} 条", history.len());
 
             let content = &new_message.content;
@@ -166,6 +152,35 @@ impl EventHandler for AIMessageHandler {
         }
     }
     async fn ready(&self, _ctx: Context, _data_about_bot: Ready) {}
+}
+
+impl AIMessageHandler {
+    async fn fetch_history(
+        ctx: &Context,
+        new_message: &Message,
+        user_id: serenity::model::id::UserId,
+    ) -> Vec<Message> {
+        let select = GetMessages::new().limit(50).before(new_message.id);
+        new_message
+            .channel_id
+            .messages(ctx, select)
+            .await
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|msg| msg.author.id == user_id || msg.author.bot)
+            //获取开头不为`/`的消息，也就是排除命令内容
+            .filter(|msg| !msg.content.starts_with("/"))
+            .collect()
+    }
+
+    async fn send_thinking_message(ctx: &Context, new_message: &Message) -> Message {
+        new_message
+            .channel_id
+            .say(ctx, "请稍等，我正在思考...")
+            .await
+            .map_err(|e| anyhow!("Error sending message: {:?}", e))
+            .unwrap()
+    }
 }
 
 impl AIConfig {
