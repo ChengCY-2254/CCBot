@@ -1,13 +1,15 @@
 mod cmd_system;
 mod hub_system;
 mod keys;
+mod model;
 mod utils;
 
 use crate::cmd_system::{
-    Data, Error, clean_messages, join, leave, ping, play_music, register, set_status, stop,
+    clean_messages, join, leave, ping, play_music, register, set_status, stop,
 };
 pub use crate::keys::HttpKey;
 pub use anyhow::Result;
+pub use model::*;
 pub use serenity::prelude::*;
 use songbird::SerenityInit;
 pub use utils::*;
@@ -27,13 +29,13 @@ pub async fn run(token: String) -> Result<()> {
         GatewayIntents::MESSAGE_CONTENT|
         // 直接消息
         GatewayIntents::DIRECT_MESSAGES;
-    let client = reqwest::Client::new();
+    let http_client = reqwest::Client::new();
     let mut client = Client::builder(token, gateway)
         .event_handler(hub_system::GuildMessagesHandler)
         .event_handler(hub_system::AIMessageHandler::new().await)
         .framework(frame_work())
         .register_songbird()
-        .type_map_insert::<HttpKey>(client)
+        .type_map_insert::<HttpKey>(http_client)
         .await?;
 
     if let Err(why) = client.start().await {
@@ -45,11 +47,17 @@ pub async fn run(token: String) -> Result<()> {
 
 /// 命令行框架程序
 pub fn frame_work() -> poise::Framework<Data, Error> {
+    // 配置文件要在这里读取
     log::info!("create framework");
     let framework: poise::Framework<Data, anyhow::Error> = poise::Framework::builder()
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
-                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                // 为每个缓存的公会注册命令
+                let guilds = ctx.cache.guilds();
+                for id in guilds {
+                    poise::builtins::register_in_guild(ctx, &framework.options().commands, id)
+                        .await?;
+                }
                 Ok(Data {})
             })
         })

@@ -188,7 +188,7 @@ impl AIMessageHandler {
 
 impl AIConfig {
     async fn new() -> Self {
-        read_file(".config.json").await.unwrap()
+        read_file("config/ai-config.json").await.unwrap()
     }
 }
 impl AIConfig {

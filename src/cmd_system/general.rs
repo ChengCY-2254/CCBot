@@ -1,7 +1,7 @@
 //! This file contains the implementation of the HubSystem struct and its associated methods.
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
-use crate::create_ephemeral_reply;
+use crate::{create_ephemeral_reply, PoiseContext};
 use chrono::FixedOffset;
 use futures::{Stream, StreamExt};
 use lazy_static::lazy_static;
@@ -13,13 +13,6 @@ lazy_static! {
     /// UTC+8时区计算
     pub static ref UTC8: FixedOffset = FixedOffset::east_opt(8 * 3600).unwrap();
 }
-
-///用户数据
-pub struct Data {}
-///错误类型
-pub type Error = anyhow::Error;
-///上下文类型
-pub type PoiseContext<'a> = poise::Context<'a, Data, Error>;
 
 #[poise::command(slash_command, prefix_command, context_menu_command = "用户信息")]
 /// 获取并检查用户信息
@@ -124,7 +117,7 @@ pub async fn clean_messages(
         .channel_id()
         .messages(ctx.serenity_context(), GetMessages::new().limit(count))
         .await?;
-    
+
     if messages.is_empty() {
         let response = create_ephemeral_reply("没有找到可删除的消息");
         ctx.send(response).await?;
