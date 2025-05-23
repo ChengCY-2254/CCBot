@@ -109,7 +109,7 @@ pub struct AIConfig {
     model: String,
     /// 请求路径
     url: String,
-    max_token: u32,
+    max_tokens: u32,
     enable_thinking: bool,
     thinking_budget: u32,
     min_p: f32,
