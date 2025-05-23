@@ -1,7 +1,7 @@
 use crate::read_file;
 use anyhow::Context as AnyHowContext;
 use serde::{Deserialize, Serialize};
-use serenity::all::{Message, MessageBuilder, Ready};
+use serenity::all::{EditMessage, Message, MessageBuilder, Ready};
 use serenity::async_trait;
 use serenity::prelude::{Context, EventHandler};
 use std::collections::HashMap;
@@ -33,7 +33,6 @@ pub struct AIMessageHandler {
     client: reqwest::Client,
     inner: DataBox<AIConfig>,
 }
-
 
 impl AIMessageHandler {
     pub async fn new(client: reqwest::Client) -> Self {
@@ -77,6 +76,12 @@ impl EventHandler for AIMessageHandler {
             .map(|mentions| mentions.id)
             .any(|id| id == ctx.cache.current_user().id)
         {
+            let mut bot_message = new_message
+                .channel_id
+                .say(&ctx, "请稍等，我正在思考...")
+                .await
+                .unwrap();
+
             let content = &new_message.content;
 
             // 处理消息 回复消息id
@@ -90,12 +95,16 @@ impl EventHandler for AIMessageHandler {
 
             match response {
                 Ok(response) => {
+                    //success
+                    if let Err(why) = bot_message.delete(&ctx).await {
+                        log::error!("Error deleting message: {:?}", why);
+                    }
                     let message_resp = MessageBuilder::new()
                         .mention(&new_message.author)
                         .push_bold_safe(&response)
                         .build();
                     if let Err(why) = new_message
-                        .reply(ctx, message_resp)
+                        .reply(&ctx, message_resp)
                         .await
                         .context("Error when sending message")
                     {
@@ -103,6 +112,13 @@ impl EventHandler for AIMessageHandler {
                     }
                 }
                 Err(why) => {
+                    bot_message
+                        .edit(
+                            &ctx,
+                            EditMessage::new().content("思考失败，请联系管理员检查机器人"),
+                        )
+                        .await
+                        .unwrap();
                     log::error!("Error when chat: {:?}", why);
                 }
             }
