@@ -18,7 +18,7 @@ lazy_static! {
 
 /// 播放音乐或视频，可播放网站以yt-dlp支持的网站为准
 #[poise::command(slash_command)]
-pub(super) async fn play_music(
+pub async fn play_music(
     ctx: PoiseContext<'_>,
     #[description = "播放链接，支持BiliBili，更多网站请参见yt-dlp开源项目的支持列表"] url: String,
 ) -> Result<(), Error> {
@@ -31,7 +31,7 @@ pub(super) async fn play_music(
                     .ephemeral(true)
                     .content("该链接已经在播放队列中"),
             )
-            .await?;
+                .await?;
             return Ok(());
         }
     }
@@ -48,7 +48,7 @@ pub(super) async fn play_music(
                     .ephemeral(true)
                     .content("正在播放中，请稍后再试"),
             )
-            .await?;
+                .await?;
             return Ok(());
         }
     }
@@ -83,7 +83,7 @@ pub(super) async fn play_music(
             .push(" ")
             .push_named_link("", &url)
             .build();
-        
+
         ctx.reply(response).await?;
         return Ok(());
     }
@@ -92,7 +92,7 @@ pub(super) async fn play_music(
 
 ///加入一个频道
 #[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
-pub(super) async fn join(
+pub async fn join(
     ctx: PoiseContext<'_>,
     #[channel_types("Voice")] channel: GuildChannel,
 ) -> crate::Result<()> {
@@ -118,7 +118,7 @@ pub(super) async fn join(
     Ok(())
 }
 
-pub(super) struct TrackErrorNotifier;
+pub struct TrackErrorNotifier;
 // /// 检查播放状态
 // pub(super) struct PlayEnd;
 // /// 检查播放状态
@@ -142,7 +142,7 @@ impl EventHandler for TrackErrorNotifier {
 }
 
 #[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
-pub(super) async fn leave(
+pub async fn leave(
     ctx: PoiseContext<'_>,
     #[channel_types("Voice")] channel: GuildChannel,
 ) -> crate::Result<()> {
@@ -166,12 +166,12 @@ pub(super) async fn leave(
             .ephemeral(true)
             .content(format!("已离开频道 {}", channel.name)),
     )
-    .await?;
+        .await?;
     Ok(())
 }
 
 #[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
-pub(super) async fn stop(ctx: PoiseContext<'_>) -> crate::Result<()> {
+pub async fn stop(ctx: PoiseContext<'_>) -> crate::Result<()> {
     let guild_id = ctx.guild_id().with_context(|| "没有在服务器中")?;
     let manager = songbird::get(ctx.serenity_context())
         .await

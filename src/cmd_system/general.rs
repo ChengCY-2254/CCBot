@@ -1,7 +1,6 @@
 //! This file contains the implementation of the HubSystem struct and its associated methods.
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
-use crate::music_system::{join, leave, play_music, stop};
 use chrono::FixedOffset;
 use futures::{Stream, StreamExt};
 use lazy_static::lazy_static;
@@ -109,29 +108,3 @@ pub async fn autocomplete_activity_type(
         .map(|name| name.to_string())
 }
 
-/// 命令行框架程序
-pub fn frame_work() -> poise::Framework<Data, Error> {
-    log::info!("create framework");
-    let framework: poise::Framework<Data, anyhow::Error> = poise::Framework::builder()
-        .setup(|ctx, _ready, framework| {
-            Box::pin(async move {
-                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {})
-            })
-        })
-        .options(poise::FrameworkOptions {
-            commands: vec![
-                ping(),
-                register(),
-                set_status(),
-                play_music(),
-                join(),
-                leave(),
-                stop(),
-            ],
-            manual_cooldowns: false,
-            ..Default::default()
-        })
-        .build();
-    framework
-}

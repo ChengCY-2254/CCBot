@@ -1,8 +1,8 @@
 mod cmd_system;
 mod hub_system;
-mod music_system;
 mod utils;
 
+use crate::cmd_system::{Data, Error, join, leave, ping, play_music, register, set_status, stop};
 pub use anyhow::Result;
 pub use serenity::prelude::*;
 use songbird::SerenityInit;
@@ -33,7 +33,7 @@ pub async fn run(token: String) -> Result<()> {
     let mut client = Client::builder(token, gateway)
         .event_handler(hub_system::GuildMessagesHandler)
         .event_handler(hub_system::AIMessageHandler::new(client.clone()).await)
-        .framework(cmd_system::frame_work())
+        .framework(frame_work())
         .register_songbird()
         .type_map_insert::<HttpKey>(client)
         .await?;
@@ -43,4 +43,31 @@ pub async fn run(token: String) -> Result<()> {
         return Err(why.into());
     }
     Ok(())
+}
+
+/// 命令行框架程序
+pub fn frame_work() -> poise::Framework<Data, Error> {
+    log::info!("create framework");
+    let framework: poise::Framework<Data, anyhow::Error> = poise::Framework::builder()
+        .setup(|ctx, _ready, framework| {
+            Box::pin(async move {
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                Ok(Data {})
+            })
+        })
+        .options(poise::FrameworkOptions {
+            commands: vec![
+                ping(),
+                register(),
+                set_status(),
+                play_music(),
+                join(),
+                leave(),
+                stop(),
+            ],
+            manual_cooldowns: false,
+            ..Default::default()
+        })
+        .build();
+    framework
 }
