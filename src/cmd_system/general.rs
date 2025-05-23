@@ -1,7 +1,7 @@
 //! This file contains the implementation of the HubSystem struct and its associated methods.
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
-use crate::{create_ephemeral_reply, PoiseContext};
+use crate::{PoiseContext, create_ephemeral_reply};
 use chrono::FixedOffset;
 use futures::{Stream, StreamExt};
 use lazy_static::lazy_static;
@@ -106,10 +106,11 @@ pub async fn autocomplete_activity_type(
 #[poise::command(
     slash_command,
     prefix_command,
-    aliases("clean"),
+    aliases("clear"),
+    rename = "clear",
     required_permissions = "MANAGE_MESSAGES"
 )]
-pub async fn clean_messages(
+pub async fn clear(
     ctx: PoiseContext<'_>,
     #[description = "清除的消息数量"] count: u8,
 ) -> crate::Result<()> {

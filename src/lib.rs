@@ -5,7 +5,7 @@ mod model;
 mod utils;
 
 use crate::cmd_system::{
-    clean_messages, join, leave, ping, play_music, register, set_status, stop,
+    clear, join, leave, ping, play_music, register, set_status, stop,
 };
 pub use crate::keys::HttpKey;
 pub use anyhow::Result;
@@ -70,7 +70,7 @@ pub fn frame_work() -> poise::Framework<Data, Error> {
                 join(),
                 leave(),
                 stop(),
-                clean_messages(),
+                clear(),
             ],
             manual_cooldowns: false,
             ..Default::default()

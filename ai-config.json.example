@@ -1,7 +1,7 @@
 {
-  "token": "sk-zcgwosobbymhhkhlogxvhfcszajgkqoqhgsfvemyhmkyvoir",
-  "model": "Qwen/Qwen3-8B",
-  "url": "todo! your_api_url",
+  "token": "your api_token",
+  "model": "your model",
+  "url": "https://[xxx]/v1/chat/completions",
   "max_tokens": 512,
   "enable_thinking": false,
   "thinking_budget": 4096,

@@ -27,9 +27,9 @@ jobs:
       - name: 'Upload build target'
         uses: actions/upload-artifact@v4
         with:
-          name: discord_hub_bot
+          name: CCBot
           path: |
-            ./target/release/discord_hub_bot*
-            !./target/release/shuba.pdb
-            !./target/release/shuba.d
+            ./target/release/CCBot*
+            !./target/release/CCBot.pdb
+            !./target/release/CCBot.d
           retention-days: 30
