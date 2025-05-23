@@ -21,6 +21,7 @@ pub type Error = anyhow::Error;
 pub type PoiseContext<'a> = poise::Context<'a, Data, Error>;
 
 #[poise::command(slash_command, prefix_command, context_menu_command = "用户信息")]
+/// 获取并检查用户信息
 pub async fn ping(
     ctx: PoiseContext<'_>,
     #[description = "选择一个用户"] user: poise::serenity_prelude::User,
@@ -55,7 +56,6 @@ pub async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
     aliases("status"),
     required_permissions = "ADMINISTRATOR"
 )]
-/// 设置机器人状态
 pub async fn set_status(
     ctx: PoiseContext<'_>,
     #[autocomplete = "autocomplete_activity_type"]
@@ -107,4 +107,3 @@ pub async fn autocomplete_activity_type(
         .filter(move |name| futures::future::ready(name.starts_with(partial)))
         .map(|name| name.to_string())
 }
-

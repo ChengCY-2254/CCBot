@@ -1,13 +1,13 @@
 //! 语音模块
 
-use crate::HttpKey;
 use crate::cmd_system::{Error, PoiseContext};
 use anyhow::Context;
 use lazy_static::lazy_static;
 use poise::{CreateReply, async_trait};
-use serenity::all::{EmbedMessageBuilding, GuildChannel, MessageBuilder};
+use serenity::all::{GuildChannel, MessageBuilder};
 use songbird::input::YoutubeDl;
 use songbird::{Event, EventContext, EventHandler, TrackEvent};
+use crate::cmd_system::utils::get_http_client;
 
 lazy_static! {
     ///播放状态，false为没有播放，true为播放
@@ -33,14 +33,7 @@ pub async fn play_music(
             return Ok(());
         }
     }
-    let http_client = ctx
-        .serenity_context()
-        .data
-        .read()
-        .await
-        .get::<HttpKey>()
-        .cloned()
-        .with_context(|| "get http client failed")?;
+    let http_client = get_http_client(&ctx).await?;
     log::info!("http客户端获取成功");
 
     let manager = songbird::get(ctx.serenity_context())
@@ -61,7 +54,7 @@ pub async fn play_music(
 
         let response = MessageBuilder::new()
             .push_bold_safe("开始播放")
-            .push_named_link("奶龙", &url)
+            .push(&url)
             .build();
 
         ctx.reply(response).await?;
@@ -70,7 +63,7 @@ pub async fn play_music(
     Err(anyhow::anyhow!("出现异常，无法播放。"))
 }
 
-///加入一个频道
+///加入一个语音频道
 #[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
 pub async fn join(
     ctx: PoiseContext<'_>,
@@ -118,7 +111,7 @@ impl EventHandler for TrackErrorNotifier {
         None
     }
 }
-
+/// 离开一个语音频道
 #[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
 pub async fn leave(
     ctx: PoiseContext<'_>,
@@ -148,6 +141,7 @@ pub async fn leave(
     Ok(())
 }
 
+/// 停止播放当前音乐
 #[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
 pub async fn stop(ctx: PoiseContext<'_>) -> crate::Result<()> {
     let guild_id = ctx.guild_id().with_context(|| "没有在服务器中")?;
