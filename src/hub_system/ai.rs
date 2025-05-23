@@ -1,5 +1,6 @@
+use crate::hub_system::model::{AIMessage, into_ai_message};
 use crate::{HttpKey, read_file};
-use anyhow::Context as AnyHowContext;
+use anyhow::{Context as AnyHowContext, anyhow};
 use serde::{Deserialize, Serialize};
 use serenity::all::{EditMessage, GetMessages, Message, MessageBuilder, Ready};
 use serenity::async_trait;
@@ -8,7 +9,6 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use crate::hub_system::model::{into_ai_message, AIMessage};
 
 #[derive(Debug, Default)]
 struct DataBox<T>(Arc<Mutex<T>>);
@@ -79,8 +79,8 @@ impl EventHandler for AIMessageHandler {
             .any(|id| id == ctx.cache.current_user().id)
         {
             log::info!("用户 {} 提及了机器人", new_message.author);
-            log::info!("内容是 {}",new_message.content);
-            
+            log::info!("内容是 {}", new_message.content);
+
             let mut bot_message = new_message
                 .channel_id
                 .say(&ctx, "请稍等，我正在思考...")
@@ -92,7 +92,7 @@ impl EventHandler for AIMessageHandler {
             log::trace!("开始广播思考消息");
             let select = GetMessages::new().limit(50).before(new_message.id);
             // 获取历史消息
-            let history:Vec<Message> = new_message
+            let history: Vec<Message> = new_message
                 .channel_id
                 .messages(&ctx, select)
                 .await
@@ -101,8 +101,8 @@ impl EventHandler for AIMessageHandler {
                 .filter(|msg| msg.author.id == user_id || msg.author.id == bot_id)
                 .cloned()
                 .collect();
-            log::trace!("已获取历史消息记录，共计 {} 条",history.len());
-            
+            log::info!("已获取历史消息记录，共计 {} 条", history.len());
+
             let content = &new_message.content;
 
             // 处理消息 回复消息id
@@ -113,16 +113,16 @@ impl EventHandler for AIMessageHandler {
                 aiconfig
                     .chat(&http_client, content, history)
                     .await
-                    .context("Error when chat")
-                
+                    .map_err(|e| anyhow!(e))
             };
-            log::info!("服务器回复成功");
+
             match response {
                 Ok(response) => {
                     //success
                     if let Err(why) = bot_message.delete(&ctx).await {
                         log::error!("Error deleting message: {:?}", why);
                     }
+                    log::info!("服务器回复成功，正在返回消息");
                     let message_resp = MessageBuilder::new()
                         .mention(&new_message.author)
                         .push_bold_safe(&response)
@@ -163,20 +163,15 @@ impl AIConfig {
         message: &str,
         history: Vec<Message>,
     ) -> crate::Result<String> {
-        let messages:Vec<AIMessage> = history.iter().map(into_ai_message).collect();
+        let mut messages: Vec<AIMessage> = history.iter().map(into_ai_message).collect();
+        messages.push(AIMessage::new("user", message));
         let response = http_client
             .post(&self.url)
             .header("Authorization", format!("Bearer {}", self.token))
             .header("Content-Type", "application/json")
             .json(&serde_json::json!({
                 "model": self.model,
-                "messages": [
-                    messages,
-                    {
-                        "role": "user",
-                        "content": message
-                    }
-                ],
+                "messages": messages,
                 "max_tokens": self.max_tokens,
                 "temperature": self.temperature,
                 "top_p": self.top_p,

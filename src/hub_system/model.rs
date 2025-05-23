@@ -9,6 +9,15 @@ pub struct AIMessage {
     content: String,
 }
 
+impl AIMessage {
+    pub fn new<S: Into<String>>(role: S, content: S) -> Self {
+        AIMessage {
+            role: role.into(),
+            content: content.into(),
+        }
+    }
+}
+
 pub fn into_ai_message(message: &Message) -> AIMessage {
     let role = if message.author.bot {
         "assistant".to_string()
