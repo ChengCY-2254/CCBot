@@ -200,7 +200,7 @@ impl AIConfig {
                         "content": message
                     }
                 ],
-                "max_tokens": self.max_token,
+                "max_tokens": self.max_tokens,
                 "temperature": self.temperature,
                 "top_p": self.top_p,
                 "top_k": self.top_k,
