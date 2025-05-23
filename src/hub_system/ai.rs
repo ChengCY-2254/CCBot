@@ -81,7 +81,10 @@ impl EventHandler for AIMessageHandler {
         {
             log::info!("用户 {} 提及了机器人", new_message.author);
             log::info!("内容是 {}", new_message.content);
-
+            // 如果是注册指令，就不处理
+            if new_message.content.ends_with("reg") {
+                return;
+            }
             log::trace!("开始发送思考消息");
 
             let mut bot_message = Self::send_thinking_message(&ctx, &new_message).await;
