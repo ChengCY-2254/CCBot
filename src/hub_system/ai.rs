@@ -8,7 +8,7 @@ use serenity::prelude::{Context, EventHandler};
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
-use poise::CreateReply;
+use std::time::Duration;
 use tokio::sync::Mutex;
 
 #[derive(Debug, Default)]
@@ -82,15 +82,13 @@ impl EventHandler for AIMessageHandler {
             log::info!("用户 {} 提及了机器人", new_message.author);
             log::info!("内容是 {}", new_message.content);
 
+            log::trace!("开始发送思考消息");
             let mut bot_message = new_message
                 .channel_id
                 .say(&ctx, "请稍等，我正在思考...")
                 .await
                 .unwrap();
-            log::trace!("开始发送思考消息");
-            // 广播正在思考
-            new_message.channel_id.broadcast_typing(&ctx).await.unwrap();
-            log::trace!("开始广播思考消息");
+
             let select = GetMessages::new().limit(50).before(new_message.id);
             // 获取历史消息
             let history: Vec<Message> = new_message
@@ -99,9 +97,9 @@ impl EventHandler for AIMessageHandler {
                 .await
                 .unwrap()
                 .iter()
-                .filter(|msg| msg.author.id == user_id || msg.author.id == bot_id)
+                .filter(|msg| msg.author.id == user_id || msg.author.bot)
                 //获取开头不为`/`的消息，也就是排除命令内容
-                .filter(|msg|!msg.content.starts_with("/"))
+                .filter(|msg| !msg.content.starts_with("/"))
                 .cloned()
                 .collect();
             log::info!("已获取历史消息记录，共计 {} 条", history.len());
@@ -109,14 +107,30 @@ impl EventHandler for AIMessageHandler {
             let content = &new_message.content;
 
             // 处理消息 回复消息id
+            // 在获取回复的时候，继续设置编写状态
             let response = {
+                let mut interval = tokio::time::interval(Duration::from_secs(4));
                 let http_client = ctx.data.read().await.get::<HttpKey>().cloned().unwrap();
                 let aiconfig = self.inner.lock().await;
                 log::info!("开始向服务器请求回复");
-                aiconfig
-                    .chat(&http_client, content, history)
-                    .await
-                    .map_err(|e| anyhow!(e))
+                let result = tokio::select! {
+                    result = aiconfig.chat(&http_client, content, history)=>{
+                        result
+                    }
+                    _ = async {
+                        //无限循环，所以这个分支不会结束
+                        loop{
+                            // 广播正在思考
+                            new_message.channel_id.broadcast_typing(&ctx).await.ok();
+                            interval.tick().await;
+                        }
+                    }=>{
+                        // 这里是不可达代码
+                        log::info!("思考超时，正在返回消息");
+                        Err(anyhow!("思考超时"))
+                    }
+                };
+                result
             };
 
             match response {
