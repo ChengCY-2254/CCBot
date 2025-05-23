@@ -3,7 +3,9 @@ mod hub_system;
 mod keys;
 mod utils;
 
-use crate::cmd_system::{Data, Error, join, leave, ping, play_music, register, set_status, stop};
+use crate::cmd_system::{
+    Data, Error, clean_messages, join, leave, ping, play_music, register, set_status, stop,
+};
 pub use crate::keys::HttpKey;
 pub use anyhow::Result;
 pub use serenity::prelude::*;
@@ -60,6 +62,7 @@ pub fn frame_work() -> poise::Framework<Data, Error> {
                 join(),
                 leave(),
                 stop(),
+                clean_messages(),
             ],
             manual_cooldowns: false,
             ..Default::default()
