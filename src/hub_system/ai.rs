@@ -99,6 +99,8 @@ impl EventHandler for AIMessageHandler {
                 .unwrap()
                 .iter()
                 .filter(|msg| msg.author.id == user_id || msg.author.id == bot_id)
+                //获取开头不为`/`的消息，也就是排除命令内容
+                .filter(|msg|!msg.content.starts_with("/"))
                 .cloned()
                 .collect();
             log::info!("已获取历史消息记录，共计 {} 条", history.len());

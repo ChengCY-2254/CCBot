@@ -10,8 +10,6 @@ use songbird::input::YoutubeDl;
 use songbird::{Event, EventContext, EventHandler, TrackEvent};
 
 lazy_static! {
-    /// 音乐播放的控制队列
-    pub static ref MUSIC_QUEUE: tokio::sync::RwLock<Vec<String>> = tokio::sync::RwLock::new(vec![]);
     ///播放状态，false为没有播放，true为播放
     pub static ref PLAY_STATE: tokio::sync::RwLock<bool> = tokio::sync::RwLock::new(false);
 }
@@ -24,23 +22,6 @@ pub async fn play_music(
 ) -> Result<(), Error> {
     let guild_id = ctx.guild_id().with_context(|| "没有在服务器中")?;
     {
-        let queue = MUSIC_QUEUE.read().await;
-        if queue.contains(&url) {
-            ctx.send(
-                CreateReply::default()
-                    .ephemeral(true)
-                    .content("该链接已经在播放队列中"),
-            )
-                .await?;
-            return Ok(());
-        }
-    }
-    {
-        let mut queue = MUSIC_QUEUE.write().await;
-        queue.push(url.clone());
-        log::info!("当前播放队列：{:?}", *queue);
-    }
-    {
         let state = PLAY_STATE.read().await;
         if *state {
             ctx.send(
@@ -48,7 +29,7 @@ pub async fn play_music(
                     .ephemeral(true)
                     .content("正在播放中，请稍后再试"),
             )
-                .await?;
+            .await?;
             return Ok(());
         }
     }
@@ -80,8 +61,7 @@ pub async fn play_music(
 
         let response = MessageBuilder::new()
             .push_bold_safe("开始播放")
-            .push(" ")
-            .push_named_link("", &url)
+            .push_named_link("奶龙", &url)
             .build();
 
         ctx.reply(response).await?;
@@ -109,8 +89,6 @@ pub async fn join(
     let handler_lock = manager.join(guild_id, channel_id).await?;
     let mut handler = handler_lock.lock().await;
     handler.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier);
-    // handler.add_global_event(TrackEvent::End.into(), PlayEnd);
-    // handler.add_global_event(TrackEvent::Playable.into(), PlayStart);
     let reply = CreateReply::default()
         .ephemeral(true)
         .content(format!("已加入语音频道: {}", channel.name));
@@ -166,7 +144,7 @@ pub async fn leave(
             .ephemeral(true)
             .content(format!("已离开频道 {}", channel.name)),
     )
-        .await?;
+    .await?;
     Ok(())
 }
 
