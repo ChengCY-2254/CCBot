@@ -1,6 +1,5 @@
 //! 这里存放系统的一些工具函数
 
-use anyhow::Context as AnyHowContext;
 use serde::de::DeserializeOwned;
 use std::io::BufReader;
 use tokio::runtime::Runtime;
@@ -16,6 +15,6 @@ pub async fn read_file<P: AsRef<std::path::Path>, T: DeserializeOwned>(
 ) -> crate::Result<T> {
     let file = std::fs::File::open(path).expect("Unable to open config file");
     let reader = BufReader::new(file);
-    let data = serde_json::from_reader(reader).context("Failed to read file")?;
+    let data = serde_json::from_reader(reader)?;
     Ok(data)
 }

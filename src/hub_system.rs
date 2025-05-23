@@ -175,7 +175,7 @@ impl AIConfig {
     async fn new() -> Self {
         read_file(".config.json")
             .await
-            .expect("Error reading config")
+            .unwrap()
     }
 }
 impl AIConfig {
@@ -211,7 +211,7 @@ impl AIConfig {
             .await?;
 
         if response.status().is_success() {
-            let response_text = response.text().await?;
+            let response_text = response.text().await.unwrap();
             let json_response: serde_json::Value = serde_json::from_str(&response_text)?;
             if let Some(content) = json_response["choices"][0]["message"]["content"].as_str() {
                 Ok(content.to_string())
