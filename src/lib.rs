@@ -1,5 +1,6 @@
-mod hub_system;
 mod cmd_system;
+mod hub_system;
+mod music_system;
 mod utils;
 
 pub use anyhow::Result;
@@ -27,15 +28,14 @@ pub async fn run(token: String) -> Result<()> {
         // 读取消息内容
         GatewayIntents::MESSAGE_CONTENT|
         // 直接消息
-        GatewayIntents::DIRECT_MESSAGES
-        ;
-
-
-    let mut client =Client::builder(token,gateway)
+        GatewayIntents::DIRECT_MESSAGES;
+    let client = reqwest::Client::new();
+    let mut client = Client::builder(token, gateway)
         .event_handler(hub_system::GuildMessagesHandler)
+        .event_handler(hub_system::AIMessageHandler::new(client.clone()).await)
         .framework(cmd_system::frame_work())
         .register_songbird()
-        .type_map_insert::<HttpKey>(reqwest::Client::new())
+        .type_map_insert::<HttpKey>(client)
         .await?;
 
     if let Err(why) = client.start().await {

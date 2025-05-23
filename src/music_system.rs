@@ -5,7 +5,7 @@ use crate::cmd_system::{Error, PoiseContext};
 use anyhow::Context;
 use lazy_static::lazy_static;
 use poise::{CreateReply, async_trait};
-use serenity::all::GuildChannel;
+use serenity::all::{EmbedMessageBuilding, GuildChannel, MessageBuilder};
 use songbird::input::YoutubeDl;
 use songbird::{Event, EventContext, EventHandler, TrackEvent};
 
@@ -72,13 +72,19 @@ pub(super) async fn play_music(
         let mut handler = handler_lock.lock().await;
 
         log::info!("获取语音频道成功，即将开始推流");
-        let src = YoutubeDl::new(http_client, url);
+        let src = YoutubeDl::new(http_client, url.clone());
 
         log::info!("获取YoutubeDl成功");
 
         let _ = handler.play_input(src.clone().into());
 
-        ctx.say("开始播放".to_string()).await?;
+        let response = MessageBuilder::new()
+            .push_bold_safe("开始播放")
+            .push(" ")
+            .push_named_link("", &url)
+            .build();
+        
+        ctx.reply(response).await?;
         return Ok(());
     }
     Err(anyhow::anyhow!("出现异常，无法播放。"))

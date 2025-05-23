@@ -1,8 +1,7 @@
 //! This file contains the implementation of the HubSystem struct and its associated methods.
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
-mod music;
-use crate::cmd_system::music::{join, leave, play_music, stop};
+use crate::music_system::{join, leave, play_music, stop};
 use chrono::FixedOffset;
 use futures::{Stream, StreamExt};
 use lazy_static::lazy_static;
@@ -18,11 +17,11 @@ lazy_static! {
 ///用户数据
 pub struct Data {}
 ///错误类型
-type Error = anyhow::Error;
+pub type Error = anyhow::Error;
 ///上下文类型
-type PoiseContext<'a> = poise::Context<'a, Data, Error>;
+pub type PoiseContext<'a> = poise::Context<'a, Data, Error>;
 
-#[poise::command(slash_command, prefix_command,context_menu_command="用户信息")]
+#[poise::command(slash_command, prefix_command, context_menu_command = "用户信息")]
 pub async fn ping(
     ctx: PoiseContext<'_>,
     #[description = "选择一个用户"] user: poise::serenity_prelude::User,
@@ -55,7 +54,7 @@ pub async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
 #[poise::command(
     slash_command,
     aliases("status"),
-    required_permissions = "ADMINISTRATOR",
+    required_permissions = "ADMINISTRATOR"
 )]
 /// 设置机器人状态
 pub async fn set_status(

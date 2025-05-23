@@ -1,5 +1,6 @@
 /target
 .token
 .env
+.config.json
 .shuttle*
 Secrets*.toml
