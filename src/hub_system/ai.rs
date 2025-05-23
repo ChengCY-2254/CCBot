@@ -1,13 +1,14 @@
-use crate::read_file;
+use crate::{HttpKey, read_file};
 use anyhow::Context as AnyHowContext;
 use serde::{Deserialize, Serialize};
-use serenity::all::{EditMessage, Message, MessageBuilder, Ready};
+use serenity::all::{EditMessage, GetMessages, Message, MessageBuilder, Ready};
 use serenity::async_trait;
 use serenity::prelude::{Context, EventHandler};
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use crate::hub_system::model::{into_ai_message, AIMessage};
 
 #[derive(Debug, Default)]
 struct DataBox<T>(Arc<Mutex<T>>);
@@ -30,14 +31,13 @@ impl<T> Deref for DataBox<T> {
 
 #[derive(Debug)]
 pub struct AIMessageHandler {
-    client: reqwest::Client,
     inner: DataBox<AIConfig>,
 }
 
 impl AIMessageHandler {
-    pub async fn new(client: reqwest::Client) -> Self {
+    pub async fn new() -> Self {
         let inner = DataBox::new(AIConfig::new().await);
-        AIMessageHandler { client, inner }
+        AIMessageHandler { inner }
     }
 }
 
@@ -64,8 +64,10 @@ pub struct AIConfig {
 impl EventHandler for AIMessageHandler {
     #[allow(clippy::await_holding_refcell_ref)]
     async fn message(&self, ctx: Context, new_message: Message) {
+        let user_id = new_message.author.id;
+        let bot_id = ctx.cache.current_user().id;
         // 忽略自己发送的消息
-        if new_message.author.id == ctx.cache.current_user().id {
+        if user_id == bot_id {
             return;
         }
         //如果是@机器人
@@ -82,13 +84,28 @@ impl EventHandler for AIMessageHandler {
                 .await
                 .unwrap();
 
+            // 广播正在思考
+            new_message.channel_id.broadcast_typing(&ctx).await.unwrap();
+            let select = GetMessages::new().limit(50).before(new_message.id);
+            // 获取历史消息
+            let history = new_message
+                .channel_id
+                .messages(&ctx, select)
+                .await
+                .unwrap()
+                .iter()
+                .filter(|msg| msg.author.id == user_id || msg.author.id == bot_id)
+                .cloned()
+                .collect();
+            
             let content = &new_message.content;
 
             // 处理消息 回复消息id
             let response = {
+                let http_client = ctx.data.read().await.get::<HttpKey>().cloned().unwrap();
                 let aiconfig = self.inner.lock().await;
                 aiconfig
-                    .chat(&self.client, content)
+                    .chat(&http_client, content, history)
                     .await
                     .context("Error when chat")
             };
@@ -137,7 +154,9 @@ impl AIConfig {
         &self,
         http_client: &reqwest::Client,
         message: &str,
+        history: Vec<Message>,
     ) -> crate::Result<String> {
+        let messages:Vec<AIMessage> = history.iter().map(into_ai_message).collect();
         let response = http_client
             .post(&self.url)
             .header("Authorization", format!("Bearer {}", self.token))
@@ -145,6 +164,7 @@ impl AIConfig {
             .json(&serde_json::json!({
                 "model": self.model,
                 "messages": [
+                    messages,
                     {
                         "role": "user",
                         "content": message

@@ -1,18 +1,14 @@
 mod cmd_system;
 mod hub_system;
+mod keys;
 mod utils;
 
 use crate::cmd_system::{Data, Error, join, leave, ping, play_music, register, set_status, stop};
+pub use crate::keys::HttpKey;
 pub use anyhow::Result;
 pub use serenity::prelude::*;
 use songbird::SerenityInit;
 pub use utils::*;
-
-pub struct HttpKey;
-
-impl TypeMapKey for HttpKey {
-    type Value = reqwest::Client;
-}
 
 pub async fn run(token: String) -> Result<()> {
     // 成员加入/离开/更新
@@ -32,7 +28,7 @@ pub async fn run(token: String) -> Result<()> {
     let client = reqwest::Client::new();
     let mut client = Client::builder(token, gateway)
         .event_handler(hub_system::GuildMessagesHandler)
-        .event_handler(hub_system::AIMessageHandler::new(client.clone()).await)
+        .event_handler(hub_system::AIMessageHandler::new().await)
         .framework(frame_work())
         .register_songbird()
         .type_map_insert::<HttpKey>(client)
