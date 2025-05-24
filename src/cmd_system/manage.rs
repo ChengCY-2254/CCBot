@@ -59,12 +59,13 @@ pub async fn list(ctx: PoiseContext<'_>) -> crate::Result<()> {
         ctx.send(create_ephemeral_reply("当前没有监控消息撤回的频道"))
             .await?;
     } else {
-        let mut names = vec![];
+        let mut builder = MessageBuilder::new();
+        builder.push_bold_line("当前不允许发消息的频道");
         for channel_id in channel_vec.iter() {
-            let name = channel_id.name(&ctx).await?;
-            names.push(format!("#{}", name));
+            builder.mention(&channel_id.to_channel(&ctx).await?);
+            builder.push("\n");
         }
-        let content = names.join("\n");
+        let content = builder.build();
         let response = create_ephemeral_reply(content).ephemeral(true);
         ctx.send(response).await.map_err(|why| anyhow!(why))?;
     }

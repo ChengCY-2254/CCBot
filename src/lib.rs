@@ -1,3 +1,4 @@
+#![deny(unused_imports,unused_variables,unused_parens,unused_qualifications)]
 #[macro_use]
 mod macros;
 mod cmd_system;
