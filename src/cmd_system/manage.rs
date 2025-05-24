@@ -3,24 +3,27 @@
 //! 那么我需要的是add withdraw #channelID和remove withdraw #channelID  
 //! 需要查看subcommand的写法[link](https://github.com/serenity-rs/poise/blob/current/examples/feature_showcase/subcommand_required.rs)
 //! 吃了个大亏，应该把add放到withdraw的子命令中，而不是放在顶层，也就是 withdraw add #channelID
+//! todo 记得给这些玩意儿写一个补全程序，不然压根不知道有没有被记录
 
 use crate::keys::BotDataKey;
 use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
 use anyhow::{Context, anyhow};
-use serenity::all::GuildChannel;
+use serenity::all::{GuildChannel, MessageBuilder};
 
 #[poise::command(
     slash_command,
-    subcommands("add", "remove"),
+    subcommands("add", "remove", "list"),
     subcommand_required,
     required_permissions = "ADMINISTRATOR",
     prefix_command
 )]
+/// 管理撤回频道，机器人自动删除该频道中的消息
 pub async fn withdraw(_ctx: PoiseContext<'_>) -> crate::Result<()> {
     Ok(())
 }
 
 #[poise::command(slash_command, prefix_command)]
+/// 添加一个频道到撤回列表
 pub async fn add(
     ctx: PoiseContext<'_>,
     #[description = "频道"] channel: Option<GuildChannel>,
@@ -31,6 +34,7 @@ pub async fn add(
     Ok(())
 }
 #[poise::command(slash_command, prefix_command)]
+/// 从撤回列表中移除一个频道
 pub async fn remove(
     ctx: PoiseContext<'_>,
     #[description = "频道"] channel: Option<GuildChannel>,
@@ -38,6 +42,33 @@ pub async fn remove(
     if let Some(channel) = channel {
         handle_remove(ctx, channel).await?;
     }
+    Ok(())
+}
+
+#[poise::command(slash_command, prefix_command)]
+pub async fn list(ctx: PoiseContext<'_>) -> crate::Result<()> {
+    let channel_vec = {
+        let type_map = ctx.serenity_context().data.read().await;
+        let bot_data = type_map
+            .get::<BotDataKey>()
+            .context("机器人数据文件访问失败")?;
+        bot_data.access().monitored_channels.clone()
+    };
+
+    if channel_vec.is_empty() {
+        ctx.send(create_ephemeral_reply("当前没有监控消息撤回的频道"))
+            .await?;
+    } else {
+        let mut names = vec![];
+        for channel_id in channel_vec.iter() {
+            let name = channel_id.name(&ctx).await?;
+            names.push(format!("#{}", name));
+        }
+        let content = names.join("\n");
+        let response = create_ephemeral_reply(content).ephemeral(true);
+        ctx.send(response).await.map_err(|why| anyhow!(why))?;
+    }
+
     Ok(())
 }
 

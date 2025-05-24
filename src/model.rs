@@ -1,4 +1,4 @@
-use crate::{UpSafeCell, read_file};
+use crate::{read_file, UpSafeCell};
 use serde::{Deserialize, Serialize};
 use serenity::all::ChannelId;
 use std::collections::HashSet;
@@ -8,7 +8,7 @@ pub type Data = UpSafeCell<DataInner>;
 
 pub type ExportVec = Vec<poise::Command<(), Error>>;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize,Clone)]
 #[serde(deny_unknown_fields)]
 /// 用户数据
 /// todo 要将其序列化到磁盘上存储
