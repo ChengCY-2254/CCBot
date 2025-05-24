@@ -37,11 +37,12 @@ pub async fn run(token: String) -> Result<()> {
         })?;
         UpSafeCell::new(data)
     };
-    
+
     let mut client = {
         #[allow(unused_mut)]
         let mut client = Client::builder(token, gateway)
             .event_handler(hub_system::GuildMessagesHandler)
+            .event_handler(hub_system::ManagerHandler)
             .framework(frame_work())
             .register_songbird()
             .type_map_insert::<HttpKey>(http_client)
@@ -73,7 +74,6 @@ pub fn frame_work() -> poise::Framework<(), Error> {
     commands.append(&mut cmd_system::manage_export());
     commands.append(&mut cmd_system::general_export());
     commands.append(&mut cmd_system::music_export());
-
 
     let framework: poise::Framework<(), anyhow::Error> = poise::Framework::builder()
         .setup(|ctx, _ready, framework| {

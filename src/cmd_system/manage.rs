@@ -4,7 +4,7 @@
 //! 需要查看subcommand的写法[link](https://github.com/serenity-rs/poise/blob/current/examples/feature_showcase/subcommand_required.rs)
 
 use crate::keys::BotDataKey;
-use crate::{create_ephemeral_reply, ExportVec, PoiseContext};
+use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
 use anyhow::Context;
 use serenity::all::GuildChannel;
 
@@ -23,8 +23,16 @@ pub async fn add(_ctx: PoiseContext<'_>) -> crate::Result<()> {
 #[poise::command(slash_command, required_permissions = "ADMINISTRATOR", prefix_command)]
 pub async fn withdraw(
     ctx: PoiseContext<'_>,
-    #[description = "频道"] channel: GuildChannel,
+    #[description = "频道"] channel: Option<GuildChannel>,
 ) -> crate::Result<()> {
+    if let Some(channel) = channel {
+        handle_add(ctx, channel).await?;
+    }
+    Ok(())
+}
+
+/// 处理添加频道的逻辑
+pub async fn handle_add(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Result<()> {
     let add_monitored_channel = Box::pin(async || {
         let type_map = ctx.serenity_context().data.write().await;
         let data = type_map.get::<BotDataKey>();
