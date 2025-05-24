@@ -1,3 +1,4 @@
+#![cfg(feature = "ai-chat")]
 use crate::hub_system::model::{AIMessage, into_ai_message};
 use crate::{HttpKey, read_file};
 use anyhow::{Context as AnyHowContext, anyhow};
@@ -145,7 +146,10 @@ impl EventHandler for AIMessageHandler {
                     bot_message
                         .edit(
                             &ctx,
-                            EditMessage::new().content("思考失败，请联系管理员检查机器人"),
+                            EditMessage::new().content(format!(
+                                "思考失败，请联系管理员检查机器人。原因是：{}",
+                                why
+                            )),
                         )
                         .await
                         .unwrap();
@@ -188,7 +192,7 @@ impl AIMessageHandler {
 
 impl AIConfig {
     async fn new() -> Self {
-        read_file("config/ai-config.json").await.unwrap()
+        read_file("config/ai-config.json").unwrap()
     }
 }
 impl AIConfig {

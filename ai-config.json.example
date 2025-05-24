@@ -1,8 +1,8 @@
 {
-  "token": "your api_token",
-  "model": "your model",
-  "url": "https://[xxx]/v1/chat/completions",
-  "max_tokens": 512,
+  "token": "your token",
+  "model": "Qwen/Qwen3-8B",
+  "url": "https://api.siliconflow.cn/v1/chat/completions",
+  "max_tokens": 1000,
   "enable_thinking": false,
   "thinking_budget": 4096,
   "min_p": 0.05,

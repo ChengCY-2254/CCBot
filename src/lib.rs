@@ -1,12 +1,12 @@
+#[macro_use]
+mod macros;
 mod cmd_system;
 mod hub_system;
 mod keys;
 mod model;
 mod utils;
 
-use crate::cmd_system::{
-    clear, join, leave, ping, play_music, register, set_status, stop,
-};
+use crate::cmd_system::{clear, join, leave, ping, play_music, register, set_status, stop};
 pub use crate::keys::HttpKey;
 pub use anyhow::Result;
 pub use model::*;
@@ -30,13 +30,22 @@ pub async fn run(token: String) -> Result<()> {
         // 直接消息
         GatewayIntents::DIRECT_MESSAGES;
     let http_client = reqwest::Client::new();
-    let mut client = Client::builder(token, gateway)
-        .event_handler(hub_system::GuildMessagesHandler)
-        .event_handler(hub_system::AIMessageHandler::new().await)
-        .framework(frame_work())
-        .register_songbird()
-        .type_map_insert::<HttpKey>(http_client)
-        .await?;
+    let mut client = {
+        #[allow(unused_mut)]
+        let mut client = Client::builder(token, gateway)
+            .event_handler(hub_system::GuildMessagesHandler)
+            .framework(frame_work())
+            .register_songbird()
+            .type_map_insert::<HttpKey>(http_client);
+        #[cfg(feature = "ai-chat")]
+        #[allow(unused_mut)]
+        let mut client = {
+            let ai_handler = hub_system::AIMessageHandler::new().await;
+            client.event_handler(ai_handler)
+        };
+
+        client.await?
+    };
 
     if let Err(why) = client.start().await {
         log::error!("Client error: {:?}", why);
@@ -49,6 +58,13 @@ pub async fn run(token: String) -> Result<()> {
 pub fn frame_work() -> poise::Framework<Data, Error> {
     // 配置文件要在这里读取
     log::info!("create framework");
+    let data = Data::new("config/data.json")
+        .map_err(|e| {
+            log::error!("Error loading data: {:?}", e);
+            anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
+        })
+        .unwrap();
+
     let framework: poise::Framework<Data, anyhow::Error> = poise::Framework::builder()
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
@@ -58,7 +74,7 @@ pub fn frame_work() -> poise::Framework<Data, Error> {
                     poise::builtins::register_in_guild(ctx, &framework.options().commands, id)
                         .await?;
                 }
-                Ok(Data {})
+                Ok(data)
             })
         })
         .options(poise::FrameworkOptions {

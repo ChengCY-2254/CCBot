@@ -1,7 +1,6 @@
 //! 数据模型
-
+#![allow(dead_code)]
 use serde::Serialize;
-use serenity::all::Message;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct AIMessage {
@@ -18,7 +17,8 @@ impl AIMessage {
     }
 }
 
-pub fn into_ai_message(message: &Message) -> AIMessage {
+#[cfg(feature = "ai-chat")]
+pub fn into_ai_message(message: &serenity::all::Message) -> AIMessage {
     let role = if message.author.bot {
         "assistant".to_string()
     } else {
