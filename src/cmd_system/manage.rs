@@ -75,7 +75,7 @@ pub async fn list(ctx: PoiseContext<'_>) -> crate::Result<()> {
 }
 
 async fn handle_add(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Result<()> {
-    let (already_exists, channel_name) = {
+    let (already_exists, _) = {
         let type_map = ctx.serenity_context().data.write().await;
         let data = type_map.get::<BotDataKey>();
         let mut data = data.context("app数据目录访问失败")?.exclusive_access();
@@ -101,13 +101,13 @@ async fn handle_add(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Resu
             .send_message(&ctx, CreateMessage::new().content(announcement))
             .await
             .context("发送频道公告失败")?;
-        let response = create_ephemeral_reply(format!("已将频道 {} 添加到撤回列表", channel_name));
+        let response = create_ephemeral_reply(format!("已将频道 <#{}> 添加到撤回列表", channel.id));
         ctx.send(response).await.map_err(|why| anyhow!("{}", why))?;
     }
     Ok(())
 }
 async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Result<()> {
-    let (exists, channel_name) = {
+    let (exists, _) = {
         let type_map = ctx.serenity_context().data.write().await;
         let data = type_map.get::<BotDataKey>();
         let mut data = data.context("app数据目录访问失败")?.exclusive_access();
@@ -122,7 +122,7 @@ async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::R
 
     if exists {
         let response =
-            create_ephemeral_reply(format!("已将频道 <#{}> 从撤回列表中移除", channel_name,));
+            create_ephemeral_reply(format!("已将频道 <#{}> 从撤回列表中移除", channel.id));
         let announcement = format!(
             "**<#{}> 已经从撤回列表中移除，消息将不再被自动删除。**",
             channel.id
