@@ -4,12 +4,13 @@ use tracing::instrument;
 
 #[instrument]
 fn main() -> cc_bot::Result<()> {
+    tracing_subscriber::fmt::init();
+    println_message();
     // 预检查并释放配置目录，释放后退出。
     pre_check()?;
     // Load environment variables from .env file
     dotenv::from_path("config/.env").with_context(|| "Failed to load .env")?;
-
-    tracing_subscriber::fmt::init();
+    
     let token = std::env::var("DISCORD_TOKEN").with_context(|| "DISCORD_TOKEN not set")?;
     let runtime = cc_bot::runtime();
     runtime.block_on(async {
@@ -52,4 +53,10 @@ fn pre_check() -> cc_bot::Result<()> {
         std::process::exit(0);
     }
     Ok(())
+}
+
+fn println_message(){
+    println!("欢迎使用CC-Bot，更多信息请查看");
+    println!("https://github.com/ChengCY-2254/CCBot");
+    println!("如果你有任何问题，请在GitHub上提交issue");
 }

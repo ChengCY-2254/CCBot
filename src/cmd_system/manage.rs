@@ -2,9 +2,8 @@
 //! 这里创建频道管理命令  
 //! 首先需要的是将xx频道加入撤回列表  
 //! 那么我需要的是add withdraw #channelID和remove withdraw #channelID  
-//! 需要查看subcommand的写法[link](https://github.com/serenity-rs/poise/blob/current/examples/feature_showcase/subcommand_required.rs)
+//! 需要查看subcommand的写法[link](https://github.com/serenity-rs/poise/blob/current/examples/feature_showcase/subcommand_required.rs)    
 //! 吃了个大亏，应该把add放到withdraw的子命令中，而不是放在顶层，也就是 withdraw add #channelID
-//! todo 记得给这些玩意儿写一个补全程序，不然压根不知道有没有被记录
 
 use crate::keys::BotDataKey;
 use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
