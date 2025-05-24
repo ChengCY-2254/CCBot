@@ -6,9 +6,9 @@
 //! 吃了个大亏，应该把add放到withdraw的子命令中，而不是放在顶层，也就是 withdraw add #channelID
 
 use crate::keys::BotDataKey;
-use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
-use anyhow::{Context, anyhow};
-use serenity::all::{GuildChannel, MessageBuilder};
+use crate::{create_ephemeral_reply, ExportVec, PoiseContext};
+use anyhow::{anyhow, Context};
+use serenity::all::{CreateMessage, GuildChannel, MessageBuilder};
 
 #[poise::command(
     slash_command,
@@ -89,12 +89,18 @@ async fn handle_add(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Resu
     };
 
     if already_exists {
-        let response = create_ephemeral_reply(format!(
-            "频道 {}:{} 已经在撤回列表中",
-            channel_name, channel.id
-        ));
+        let response = create_ephemeral_reply(format!("频道 <#{}> 已经在撤回列表中", channel.id));
         ctx.send(response).await?;
     } else {
+        // 给受管控的频道发送公告
+        let announcement = format!(
+            "**<#{}> 已经被添加到撤回列表中，所有消息将被自动删除。**",
+            channel.id
+        );
+        channel
+            .send_message(&ctx, CreateMessage::new().content(announcement))
+            .await
+            .context("发送频道公告失败")?;
         let response = create_ephemeral_reply(format!("已将频道 {} 添加到撤回列表", channel_name));
         ctx.send(response).await.map_err(|why| anyhow!("{}", why))?;
     }
@@ -115,15 +121,20 @@ async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::R
     };
 
     if exists {
-        let response = create_ephemeral_reply(format!(
-            "已将频道 {}:{} 从撤回列表中移除",
-            channel_name, channel.id
-        ));
+        let response =
+            create_ephemeral_reply(format!("已将频道 <#{}> 从撤回列表中移除", channel_name,));
+        let announcement = format!(
+            "**<#{}> 已经从撤回列表中移除，消息将不再被自动删除。**",
+            channel.id
+        );
+        channel
+            .send_message(&ctx, CreateMessage::new().content(announcement))
+            .await?;
         ctx.send(response).await?;
     } else {
         let response = create_ephemeral_reply(format!(
-            "频道 {}:{} 不在撤回列表中",
-            channel_name, channel.id
+            "频道 <#{}> 不在撤回列表中",
+             channel.id
         ));
         ctx.send(response).await?;
     }

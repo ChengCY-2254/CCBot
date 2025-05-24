@@ -29,3 +29,4 @@ async fn autocomplete_activity_type(
   ```
   `required_permissions = "ADMINISTRATOR"`描述了这个命令的权限要求。
 
+- 淦，这个机器人返回消息的类型太多了，什么`CreateMessage`、`CreateReply`，我自己去看md文档吧。
