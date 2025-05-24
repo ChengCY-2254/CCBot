@@ -1,7 +1,7 @@
 //! This file contains the implementation of the HubSystem struct and its associated methods.
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
-use crate::{PoiseContext, create_ephemeral_reply};
+use crate::{create_ephemeral_reply, ExportVec, PoiseContext};
 use chrono::FixedOffset;
 use futures::{Stream, StreamExt};
 use lazy_static::lazy_static;
@@ -16,7 +16,7 @@ lazy_static! {
 
 #[poise::command(slash_command, prefix_command, context_menu_command = "用户信息")]
 /// 获取并检查用户信息
-pub async fn ping(
+async fn ping(
     ctx: PoiseContext<'_>,
     #[description = "选择一个用户"] user: poise::serenity_prelude::User,
 ) -> crate::Result<()> {
@@ -39,7 +39,7 @@ pub async fn ping(
 
 /// 注册命令的命令，需要使用@`[yourbot]` register来进行使用
 #[poise::command(prefix_command, aliases("reg"))]
-pub async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
+async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
     poise::builtins::register_application_commands_buttons(ctx).await?;
     Ok(())
 }
@@ -50,7 +50,7 @@ pub async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
     aliases("status"),
     required_permissions = "ADMINISTRATOR"
 )]
-pub async fn set_status(
+async fn set_status(
     ctx: PoiseContext<'_>,
     #[autocomplete = "autocomplete_activity_type"]
     #[description = "状态类型"]
@@ -93,7 +93,7 @@ pub async fn set_status(
 }
 
 /// 状态补全程序
-pub async fn autocomplete_activity_type(
+async fn autocomplete_activity_type(
     _ctx: PoiseContext<'_>,
     partial: &str,
 ) -> impl Stream<Item = String> {
@@ -110,7 +110,7 @@ pub async fn autocomplete_activity_type(
     rename = "clear",
     required_permissions = "MANAGE_MESSAGES"
 )]
-pub async fn clear(
+async fn clear(
     ctx: PoiseContext<'_>,
     #[description = "清除的消息数量"] count: u8,
 ) -> crate::Result<()> {
@@ -131,4 +131,8 @@ pub async fn clear(
         ctx.send(response).await?;
     }
     Ok(())
+}
+
+pub fn general_export() -> ExportVec {
+    vec![ping(), register(), set_status(), clear()]
 }

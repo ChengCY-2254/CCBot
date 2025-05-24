@@ -3,3 +3,4 @@ mod utils;
 
 add_sub_mod!(general);
 add_sub_mod!(music);
+add_sub_mod!(manage);

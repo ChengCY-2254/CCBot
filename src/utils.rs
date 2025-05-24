@@ -3,8 +3,13 @@
 use anyhow::Context;
 use poise::CreateReply;
 use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
+use std::cell::{RefCell, RefMut};
 use std::io::BufReader;
+use std::ops::Deref;
+use std::sync::Arc;
 use tokio::runtime::Runtime;
+use tokio::sync::Mutex;
 
 #[inline]
 pub fn runtime() -> Runtime {
@@ -51,11 +56,50 @@ where
     let path = path.as_ref();
     #[allow(clippy::needless_return)]
     if path.exists() {
-        return
+        return;
     } else {
         std::fs::File::create(path)
             .with_context(|| format!("Unable to open {:?}", path))
             .unwrap();
         f()
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct DataBox<T>(Arc<Mutex<T>>);
+
+impl<T> DataBox<T> {
+    pub fn new(data: T) -> Self {
+        DataBox(Arc::new(Mutex::new(data)))
+    }
+}
+unsafe impl<T> Send for DataBox<T> {}
+unsafe impl<T> Sync for DataBox<T> {}
+
+impl<T> Deref for DataBox<T> {
+    type Target = Arc<Mutex<T>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct UpSafeCell<T>(RefCell<T>);
+
+unsafe impl<T> Sync for UpSafeCell<T> {}
+unsafe impl<T> Send for UpSafeCell<T> {}
+
+impl<T> UpSafeCell<T>where T:Send + Sync {
+    pub unsafe fn new(data: T) -> Self {
+        Self(RefCell::new(data))
+    }
+
+    pub fn exclusive_access(&self) -> RefMut<'_, T> {
+        self.0.borrow_mut()
+    }
+
+    pub fn access(&self) -> std::cell::Ref<'_, T> {
+        self.0.borrow()
     }
 }

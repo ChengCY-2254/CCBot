@@ -1,35 +1,12 @@
-#![cfg(feature = "ai-chat")]
 use crate::hub_system::model::{AIMessage, into_ai_message};
-use crate::{HttpKey, read_file};
+use crate::{DataBox, HttpKey, read_file};
 use anyhow::{Context as AnyHowContext, anyhow};
 use serde::{Deserialize, Serialize};
 use serenity::all::{EditMessage, GetMessages, Message, MessageBuilder, Ready};
 use serenity::async_trait;
 use serenity::prelude::{Context, EventHandler};
 use std::collections::HashMap;
-use std::ops::Deref;
-use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::Mutex;
-
-#[derive(Debug, Default)]
-struct DataBox<T>(Arc<Mutex<T>>);
-
-impl<T> DataBox<T> {
-    fn new(data: T) -> Self {
-        DataBox(Arc::new(Mutex::new(data)))
-    }
-}
-unsafe impl<T> Send for DataBox<T> {}
-unsafe impl<T> Sync for DataBox<T> {}
-
-impl<T> Deref for DataBox<T> {
-    type Target = Arc<Mutex<T>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 #[derive(Debug)]
 pub struct AIMessageHandler {

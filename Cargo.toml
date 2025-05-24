@@ -10,6 +10,8 @@ dotenv = "0.15.0"
 futures = "0.3.31"
 lazy_static = "1.5.0"
 log = "0.4.27"
+# macro使用
+paste = "1.0.15"
 poise = "0.6.1"
 reqwest = { version = "0.12.15", features = ["json"] }
 serde = "1.0.219"
@@ -20,9 +22,9 @@ tokio = { version = "1.45.0", features = ["rt-multi-thread"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["local-time", "fmt"] }
 
-#[dependencies.symphonia]
-#version = "0.5"
-#features = ["all-codecs", "all-formats"] # ...as well as any extras you need!
+[dependencies.symphonia]
+version = "0.5"
+features = ["all"]
 
 [features]
 ai-chat = []

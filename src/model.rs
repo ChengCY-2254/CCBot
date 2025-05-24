@@ -1,8 +1,12 @@
-use std::collections::HashSet;
+use crate::{UpSafeCell, read_file};
 use serde::{Deserialize, Serialize};
-use std::path::{Path};
 use serenity::all::ChannelId;
-use crate::read_file;
+use std::collections::HashSet;
+use std::path::Path;
+
+pub type Data = UpSafeCell<DataInner>;
+
+pub type ExportVec = Vec<poise::Command<(), Error>>;
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -14,22 +18,34 @@ use crate::read_file;
 /// 需要在创建时检查是否有配置文件夹
 /// 如果没有，放出示例配置文件，然后退出。
 /// 如果有，那就进入服务状态
-pub struct Data {
+pub struct DataInner {
     /// 需要监控的频道ID，进了这个set的频道发送消息后都会撤回。
-    listener_channel:HashSet<ChannelId>
+    pub monitored_channels: HashSet<ChannelId>,
 }
 ///错误类型
 pub type Error = anyhow::Error;
 ///上下文类型
-pub type PoiseContext<'a> = poise::Context<'a, Data, Error>;
+pub type PoiseContext<'a> = poise::Context<'a, (), Error>;
 
-impl Data {
-    pub fn new(path: impl AsRef<Path>) -> crate::Result<Data> {
+impl DataInner {
+    /// 添加一个需要监控的频道
+    pub fn add_monitored_channel(&mut self, channel_id: ChannelId) {
+        self.monitored_channels.insert(channel_id);
+    }
+    /// 删除一个需要监控的频道
+    pub fn remove_monitored_channel(&mut self, channel_id: ChannelId) {
+        self.monitored_channels.remove(&channel_id);
+    }
+}
+
+impl DataInner {
+    pub fn new(path: impl AsRef<Path>) -> crate::Result<DataInner> {
         read_file(path)
     }
     /// 保存数据文件
-    pub fn save(&self, path: impl AsRef<Path>) -> crate::Result<()> {
-        let path = path.as_ref();
+    /// path 为配置文件夹
+    pub fn save(&self, config_dir_path: impl AsRef<Path>) -> crate::Result<()> {
+        let path = config_dir_path.as_ref();
         if !path.exists() {
             std::fs::create_dir_all(path)?;
         }

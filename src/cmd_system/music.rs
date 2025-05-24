@@ -1,13 +1,13 @@
 //! 语音模块
 
+use crate::cmd_system::utils::get_http_client;
+use crate::{Error, ExportVec, PoiseContext};
 use anyhow::Context;
 use lazy_static::lazy_static;
 use poise::{CreateReply, async_trait};
 use serenity::all::{GuildChannel, MessageBuilder};
 use songbird::input::YoutubeDl;
 use songbird::{Event, EventContext, EventHandler, TrackEvent};
-use crate::cmd_system::utils::get_http_client;
-use crate::{Error, PoiseContext};
 
 lazy_static! {
     ///播放状态，false为没有播放，true为播放
@@ -159,4 +159,8 @@ pub async fn stop(ctx: PoiseContext<'_>) -> crate::Result<()> {
     }
 
     Ok(())
+}
+
+pub fn music_export() -> ExportVec {
+    vec![play_music(), join(), leave(), stop()]
 }
