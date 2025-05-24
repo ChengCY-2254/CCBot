@@ -1,8 +1,9 @@
-//! 数据模型
+//! 一些数据模型和工具方法
 #![allow(dead_code)]
 use serde::Serialize;
 
 #[derive(Serialize, Debug, Clone)]
+/// AI消息结构体
 pub struct AIMessage {
     role: String,
     content: String,

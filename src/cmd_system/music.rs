@@ -1,4 +1,5 @@
-//! 语音模块
+//! # 音乐模块
+//! 语音方向的内容
 
 use crate::cmd_system::utils::get_http_client;
 use crate::{Error, ExportVec, PoiseContext};

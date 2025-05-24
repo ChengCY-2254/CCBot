@@ -1,14 +1,16 @@
-use crate::{read_file, UpSafeCell};
+use crate::{UpSafeCell, read_file};
 use serde::{Deserialize, Serialize};
 use serenity::all::ChannelId;
 use std::collections::HashSet;
 use std::path::Path;
 
+/// 机器人需要保存的配置
 pub type Data = UpSafeCell<DataInner>;
 
+/// [crate::macros::add_sub_mod]所使用的导出类型
 pub type ExportVec = Vec<poise::Command<(), Error>>;
 
-#[derive(Serialize, Deserialize,Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 /// 用户数据
 /// todo 要将其序列化到磁盘上存储
@@ -39,6 +41,7 @@ impl DataInner {
 }
 
 impl DataInner {
+    /// 给定一个路径，读取数据文件并返回数据
     pub fn new(path: impl AsRef<Path>) -> crate::Result<DataInner> {
         read_file(path)
     }

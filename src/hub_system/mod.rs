@@ -1,11 +1,7 @@
 //! 该模块主要使用serenity进行构建
-#[cfg(feature = "ai-chat")]
-mod ai;
-mod guild_message;
-mod manager;
 mod model;
 
+add_handler_mod!(guild_message);
+add_handler_mod!(manager);
 #[cfg(feature = "ai-chat")]
-pub use ai::*;
-pub use guild_message::*;
-pub use manager::*;
+add_handler_mod!(ai);

@@ -1,3 +1,4 @@
+//! # 通用模块
 //! This file contains the implementation of the HubSystem struct and its associated methods.
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 

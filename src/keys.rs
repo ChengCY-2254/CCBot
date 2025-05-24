@@ -7,6 +7,7 @@ impl TypeMapKey for HttpKey {
     type Value = reqwest::Client;
 }
 
+/// 机器人数据的key
 pub struct BotDataKey;
 
 impl TypeMapKey for BotDataKey {

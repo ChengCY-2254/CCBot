@@ -1,4 +1,11 @@
-#![deny(unused_imports,unused_variables,unused_parens,unused_qualifications)]
+#![deny(
+    unused_imports,
+    unused_variables,
+    unused_parens,
+    unused_qualifications,
+    missing_docs
+)]
+//! # 定义CCBot的🤖相关
 #[macro_use]
 mod macros;
 mod cmd_system;
@@ -15,6 +22,7 @@ pub use serenity::prelude::*;
 use songbird::SerenityInit;
 pub use utils::*;
 
+/// 机器人的启动入口
 pub async fn run(token: String) -> Result<()> {
     // 成员加入/离开/更新
     let gateway = GatewayIntents::GUILD_MEMBERS |
@@ -42,7 +50,7 @@ pub async fn run(token: String) -> Result<()> {
     let mut client = {
         #[allow(unused_mut)]
         let mut client = Client::builder(token, gateway)
-            .event_handler(hub_system::GuildMessagesHandler)
+            .event_handler(hub_system::GuildMessageHandler)
             .event_handler(hub_system::ManagerHandler)
             .framework(frame_work())
             .register_songbird()
@@ -51,7 +59,7 @@ pub async fn run(token: String) -> Result<()> {
         #[cfg(feature = "ai-chat")]
         #[allow(unused_mut)]
         let mut client = {
-            let ai_handler = hub_system::AIMessageHandler::new().await;
+            let ai_handler = hub_system::AiHandler::new().await;
             client.event_handler(ai_handler)
         };
 

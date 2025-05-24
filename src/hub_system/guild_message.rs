@@ -5,10 +5,10 @@ use serenity::all::{ActivityData, CreateMessage, Message, MessageBuilder, Ready,
 use serenity::async_trait;
 
 /// 消息处理子系统
-pub struct GuildMessagesHandler;
+pub struct GuildMessageHandler;
 
 #[async_trait]
-impl EventHandler for GuildMessagesHandler {
+impl EventHandler for GuildMessageHandler {
     async fn message(&self, ctx: Context, new_message: Message) {
         // 忽略自己发送的消息
         if new_message.author.id == ctx.cache.current_user().id {

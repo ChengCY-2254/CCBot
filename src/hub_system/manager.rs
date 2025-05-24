@@ -4,6 +4,7 @@ use crate::keys::BotDataKey;
 use poise::async_trait;
 use serenity::all::{Context, EventHandler, Message};
 
+/// 这个模块用于处理消息撤回，与[crate::cmd_system::manage_export]联动
 pub struct ManagerHandler;
 
 #[async_trait]

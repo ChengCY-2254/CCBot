@@ -9,14 +9,14 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 #[derive(Debug)]
-pub struct AIMessageHandler {
+pub struct AiHandler {
     inner: DataBox<AIConfig>,
 }
 
-impl AIMessageHandler {
+impl AiHandler {
     pub async fn new() -> Self {
         let inner = DataBox::new(AIConfig::new().await);
-        AIMessageHandler { inner }
+        AiHandler { inner }
     }
 }
 
@@ -40,7 +40,7 @@ pub struct AIConfig {
 }
 
 #[async_trait]
-impl EventHandler for AIMessageHandler {
+impl EventHandler for AiHandler {
     #[allow(clippy::await_holding_refcell_ref)]
     async fn message(&self, ctx: Context, new_message: Message) {
         let user_id = new_message.author.id;
@@ -138,7 +138,7 @@ impl EventHandler for AIMessageHandler {
     async fn ready(&self, _ctx: Context, _data_about_bot: Ready) {}
 }
 
-impl AIMessageHandler {
+impl AiHandler {
     async fn fetch_history(
         ctx: &Context,
         new_message: &Message,

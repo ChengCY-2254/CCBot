@@ -6,11 +6,20 @@
 /// `pub fn general_export() -> Vec<poise::Command<Data, Error>> {
 ///     vec![add()]
 /// }`
-macro_rules! add_sub_mod {
+macro_rules! add_cmd_mod {
     ($mod_name:ident) => {
         mod $mod_name;
         paste::paste!{
             pub use $mod_name::[<$mod_name _export>];
+        }
+    };
+}
+
+macro_rules! add_handler_mod {
+    ($mod_name:ident) => {
+        mod $mod_name;
+        paste::paste!{
+            pub use $mod_name::[<$mod_name:camel Handler>];
         }
     };
 }

@@ -1,3 +1,4 @@
+//! # 管理相关
 //! 这里创建频道管理命令  
 //! 首先需要的是将xx频道加入撤回列表  
 //! 那么我需要的是add withdraw #channelID和remove withdraw #channelID  
@@ -46,6 +47,7 @@ pub async fn remove(
 }
 
 #[poise::command(slash_command, prefix_command)]
+/// 查看当前禁止留存消息的频道
 pub async fn list(ctx: PoiseContext<'_>) -> crate::Result<()> {
     let channel_vec = {
         let type_map = ctx.serenity_context().data.read().await;
