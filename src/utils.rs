@@ -37,10 +37,7 @@ pub fn create_ephemeral_reply(content: impl Into<String>) -> CreateReply {
 /// 检查是否存在配置目录
 pub fn check_config_dir_exists() -> crate::Result<()> {
     let config_dir = std::path::Path::new("config");
-    if config_dir.join("ai-config.json").is_file()
-        && config_dir.join(".env").is_file()
-        && config_dir.join("data.json").is_file()
-    {
+    if config_dir.join(".env").is_file() && config_dir.join("data.json").is_file() {
         Ok(())
     } else {
         Err(anyhow::anyhow!(

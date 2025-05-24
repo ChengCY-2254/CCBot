@@ -1,43 +1,13 @@
-use crate::hub_system::model::{AIMessage, into_ai_message};
-use crate::{DataBox, HttpKey, read_file};
+use crate::HttpKey;
+use crate::keys::BotDataKey;
 use anyhow::{Context as AnyHowContext, anyhow};
-use serde::{Deserialize, Serialize};
 use serenity::all::{EditMessage, GetMessages, Message, MessageBuilder, Ready};
 use serenity::async_trait;
 use serenity::prelude::{Context, EventHandler};
-use std::collections::HashMap;
 use std::time::Duration;
 
 #[derive(Debug)]
-pub struct AiHandler {
-    inner: DataBox<AIConfig>,
-}
-
-impl AiHandler {
-    pub async fn new() -> Self {
-        let inner = DataBox::new(AIConfig::new().await);
-        AiHandler { inner }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct AIConfig {
-    token: String,
-    /// 模型
-    model: String,
-    /// 请求路径
-    url: String,
-    max_tokens: u32,
-    enable_thinking: bool,
-    thinking_budget: u32,
-    min_p: f32,
-    temperature: f32,
-    top_p: f32,
-    top_k: f32,
-    frequency_penalty: f32,
-    n: i8,
-    response_format: HashMap<String, String>,
-}
+pub struct AiHandler;
 
 #[async_trait]
 impl EventHandler for AiHandler {
@@ -78,7 +48,17 @@ impl EventHandler for AiHandler {
             let response = {
                 let mut interval = tokio::time::interval(Duration::from_secs(4));
                 let http_client = ctx.data.read().await.get::<HttpKey>().cloned().unwrap();
-                let aiconfig = self.inner.lock().await;
+                let aiconfig = {
+                    ctx.data
+                        .read()
+                        .await
+                        .get::<BotDataKey>()
+                        .context("获取Bot配置文件出现异常")
+                        .unwrap()
+                        .access()
+                        .aiconfig
+                        .clone()
+                };
                 log::info!("开始向服务器请求回复");
                 let result = tokio::select! {
                     result = aiconfig.chat(&http_client, content, history)=>{
@@ -164,53 +144,5 @@ impl AiHandler {
             .await
             .map_err(|e| anyhow!("Error sending message: {:?}", e))
             .unwrap()
-    }
-}
-
-impl AIConfig {
-    async fn new() -> Self {
-        read_file("config/ai-config.json").unwrap()
-    }
-}
-impl AIConfig {
-    pub async fn chat(
-        &self,
-        http_client: &reqwest::Client,
-        message: &str,
-        history: Vec<Message>,
-    ) -> crate::Result<String> {
-        let mut messages: Vec<AIMessage> = history.iter().map(into_ai_message).collect();
-        messages.push(AIMessage::new("user", message));
-        let response = http_client
-            .post(&self.url)
-            .header("Authorization", format!("Bearer {}", self.token))
-            .header("Content-Type", "application/json")
-            .json(&serde_json::json!({
-                "model": self.model,
-                "messages": messages,
-                "max_tokens": self.max_tokens,
-                "temperature": self.temperature,
-                "top_p": self.top_p,
-                "top_k": self.top_k,
-                "frequency_penalty": self.frequency_penalty,
-                "n": self.n,
-            }))
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            let response_text = response.text().await?;
-            let json_response: serde_json::Value = serde_json::from_str(&response_text)?;
-            if let Some(content) = json_response["choices"][0]["message"]["content"].as_str() {
-                Ok(content.to_string())
-            } else {
-                Err(anyhow::anyhow!("Invalid response format"))
-            }
-        } else {
-            Err(anyhow::anyhow!(
-                "Request failed with status: {}",
-                response.status()
-            ))
-        }
     }
 }

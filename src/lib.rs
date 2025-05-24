@@ -31,11 +31,11 @@ pub async fn run(token: String) -> Result<()> {
         // 频道消息
         GatewayIntents::GUILD_MESSAGES |
         // 语音频道状态
-        GatewayIntents::GUILD_VOICE_STATES|
+        GatewayIntents::GUILD_VOICE_STATES |
         // 用户在线状态
-        GatewayIntents::GUILD_PRESENCES|
+        GatewayIntents::GUILD_PRESENCES |
         // 读取消息内容
-        GatewayIntents::MESSAGE_CONTENT|
+        GatewayIntents::MESSAGE_CONTENT |
         // 直接消息
         GatewayIntents::DIRECT_MESSAGES;
     let http_client = reqwest::Client::new();
@@ -52,16 +52,11 @@ pub async fn run(token: String) -> Result<()> {
         let mut client = Client::builder(token, gateway)
             .event_handler(hub_system::GuildMessageHandler)
             .event_handler(hub_system::ManagerHandler)
+            .event_handler(hub_system::AiHandler)
             .framework(frame_work())
             .register_songbird()
             .type_map_insert::<HttpKey>(http_client)
             .type_map_insert::<BotDataKey>(data);
-        #[cfg(feature = "ai-chat")]
-        #[allow(unused_mut)]
-        let mut client = {
-            let ai_handler = hub_system::AiHandler::new().await;
-            client.event_handler(ai_handler)
-        };
 
         client.await?
     };

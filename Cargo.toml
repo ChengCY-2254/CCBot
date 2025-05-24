@@ -21,10 +21,10 @@ songbird = "0.5.0"
 tokio = { version = "1.45.0", features = ["rt-multi-thread"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["local-time", "fmt"] }
+#proc-macro-workshop = { git = "https://github.com/ChengCY-2254/proc-macro-workshop.git" }
 
 [dependencies.symphonia]
 version = "0.5"
 features = ["all"]
 
 [features]
-ai-chat = []

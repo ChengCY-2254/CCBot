@@ -24,7 +24,7 @@ fn main() -> cc_bot::Result<()> {
 /// 如果配置目录不存在，则创建配置目录和示例配置文件，然后退出程序。
 /// 如果配置目录存在，则继续执行程序。
 fn pre_check() -> cc_bot::Result<()> {
-    const EXAMPLE_AI_CONFIG: &str = include_str!("../ai-config.json.example");
+    // const EXAMPLE_AI_CONFIG: &str = include_str!("../ai-config.json.example");
     const EXAMPLE_ENV: &str = include_str!("../.env.example");
     const DATA_CONFIG: &str = include_str!("../data.json.example");
 
@@ -32,11 +32,11 @@ fn pre_check() -> cc_bot::Result<()> {
         std::fs::create_dir_all("config")?;
         log::info!("Create config dir");
 
-        handle_file_if_not_dir("config/ai-config.json", || {
-            std::fs::write("config/ai-config.json", EXAMPLE_AI_CONFIG)
-                .expect("Failed to write ai-config.json");
-            log::info!("Create ai-config file");
-        });
+        // handle_file_if_not_dir("config/ai-config.json", || {
+        //     std::fs::write("config/ai-config.json", EXAMPLE_AI_CONFIG)
+        //         .expect("Failed to write ai-config.json");
+        //     log::info!("Create ai-config file");
+        // });
 
         handle_file_if_not_dir("config/.env", || {
             std::fs::write("config/.env", EXAMPLE_ENV).expect("Failed to write .env");
