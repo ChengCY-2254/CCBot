@@ -53,6 +53,7 @@ pub async fn run(token: String) -> Result<()> {
             .event_handler(hub_system::GuildMessageHandler)
             .event_handler(hub_system::ManagerHandler)
             .event_handler(hub_system::AiHandler)
+            .event_handler(hub_system::StartHandler)
             .framework(frame_work())
             .register_songbird()
             .type_map_insert::<HttpKey>(http_client)

@@ -1,7 +1,7 @@
 //! 这里编写消息控制子系统
 
 use crate::*;
-use serenity::all::{ActivityData, CreateMessage, Message, MessageBuilder, Ready, ResumedEvent};
+use serenity::all::{CreateMessage, Message, MessageBuilder, ResumedEvent};
 use serenity::async_trait;
 
 /// 消息处理子系统
@@ -53,12 +53,7 @@ impl EventHandler for GuildMessageHandler {
             }
         }
     }
-
-    async fn ready(&self, ctx: Context, data_about_bot: Ready) {
-        ctx.set_activity(Some(ActivityData::playing("RustRover")));
-        log::info!("{} is connected!", data_about_bot.user.name);
-    }
-
+    
     async fn resume(&self, _: Context, _: ResumedEvent) {
         log::info!("Resumed");
     }

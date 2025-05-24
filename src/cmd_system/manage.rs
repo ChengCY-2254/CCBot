@@ -6,8 +6,8 @@
 //! 吃了个大亏，应该把add放到withdraw的子命令中，而不是放在顶层，也就是 withdraw add #channelID
 
 use crate::keys::BotDataKey;
-use crate::{create_ephemeral_reply, ExportVec, PoiseContext};
-use anyhow::{anyhow, Context};
+use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
+use anyhow::{Context, anyhow};
 use serenity::all::{CreateMessage, GuildChannel, MessageBuilder};
 
 #[poise::command(
@@ -132,10 +132,7 @@ async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::R
             .await?;
         ctx.send(response).await?;
     } else {
-        let response = create_ephemeral_reply(format!(
-            "频道 <#{}> 不在撤回列表中",
-             channel.id
-        ));
+        let response = create_ephemeral_reply(format!("频道 <#{}> 不在撤回列表中", channel.id));
         ctx.send(response).await?;
     }
     Ok(())

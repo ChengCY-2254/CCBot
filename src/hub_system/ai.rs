@@ -1,9 +1,12 @@
 use crate::HttpKey;
 use crate::keys::BotDataKey;
 use anyhow::{Context as AnyHowContext, anyhow};
-use serenity::all::{EditMessage, GetMessages, Message, MessageBuilder, Ready};
+use serenity::all::{
+    ButtonStyle, CreateActionRow, CreateButton, CreateInteractionResponse,
+    CreateInteractionResponseMessage, CreateMessage, EditMessage, GetMessages, Message, Ready,
+};
 use serenity::async_trait;
-use serenity::prelude::{Context, EventHandler};
+use serenity::prelude::{CacheHttp, Context, EventHandler};
 use std::time::Duration;
 
 #[derive(Debug)]
@@ -45,40 +48,7 @@ impl EventHandler for AiHandler {
 
             // 处理消息 回复消息id
             // 在获取回复的时候，继续设置编写状态
-            let response = {
-                let mut interval = tokio::time::interval(Duration::from_secs(4));
-                let http_client = ctx.data.read().await.get::<HttpKey>().cloned().unwrap();
-                let aiconfig = {
-                    ctx.data
-                        .read()
-                        .await
-                        .get::<BotDataKey>()
-                        .context("获取Bot配置文件出现异常")
-                        .unwrap()
-                        .access()
-                        .aiconfig
-                        .clone()
-                };
-                log::info!("开始向服务器请求回复");
-                let result = tokio::select! {
-                    result = aiconfig.chat(&http_client, content, history)=>{
-                        result
-                    }
-                    _ = async {
-                        //无限循环，所以这个分支不会结束
-                        loop{
-                            // 广播正在思考
-                            new_message.channel_id.broadcast_typing(&ctx).await.ok();
-                            interval.tick().await;
-                        }
-                    }=>{
-                        // 这里是不可达代码
-                        log::info!("思考超时，正在返回消息");
-                        Err(anyhow!("思考超时"))
-                    }
-                };
-                result
-            };
+            let response = { Self::request_ai_reply(&ctx, &new_message, &history, content).await };
 
             match response {
                 Ok(response) => {
@@ -87,16 +57,48 @@ impl EventHandler for AiHandler {
                         log::error!("Error deleting message: {:?}", why);
                     }
                     log::info!("服务器回复成功，正在返回消息");
-                    let message_resp = MessageBuilder::new()
-                        .mention(&new_message.author)
-                        .push_bold_safe(&response)
-                        .build();
-                    if let Err(why) = new_message
-                        .reply(&ctx, message_resp)
+                    let response = format!("<@{}> {}", new_message.author.id, response);
+
+                    let components = CreateActionRow::Buttons(vec![
+                        CreateButton::new("re.generate")
+                            .label("重新生成")
+                            .style(ButtonStyle::Primary)
+                            .emoji('🔁'),
+                    ]);
+
+                    let message_resp = CreateMessage::new()
+                        .components(vec![components])
+                        .content(response);
+
+                    let interaction = ctx
+                        .http()
+                        .send_message(new_message.channel_id, vec![], &message_resp)
                         .await
-                        .context("Error when sending message")
-                    {
-                        log::error!("Error sending message: {:?}", why);
+                        .unwrap()
+                        .await_component_interaction(&ctx.shard)
+                        .timeout(Duration::from_secs(60 * 5))
+                        .author_id(new_message.author.id)
+                        .await;
+                    if let Some(i) = interaction {
+                        if i.data.custom_id == "re.generate" {
+                            i.create_response(
+                                &ctx,
+                                CreateInteractionResponse::UpdateMessage(
+                                    CreateInteractionResponseMessage::default().content(
+                                        Self::request_ai_reply(
+                                            &ctx,
+                                            &new_message,
+                                            &history,
+                                            &new_message.content,
+                                        )
+                                        .await
+                                        .unwrap(),
+                                    ),
+                                ),
+                            )
+                            .await
+                            .unwrap()
+                        }
                     }
                 }
                 Err(why) => {
@@ -144,5 +146,44 @@ impl AiHandler {
             .await
             .map_err(|e| anyhow!("Error sending message: {:?}", e))
             .unwrap()
+    }
+
+    async fn request_ai_reply(
+        ctx: &Context,
+        new_message: &Message,
+        history: &[Message],
+        content: &str,
+    ) -> crate::Result<String> {
+        let mut interval = tokio::time::interval(Duration::from_secs(4));
+        let http_client = ctx.data.read().await.get::<HttpKey>().cloned().unwrap();
+        let aiconfig = {
+            ctx.data
+                .read()
+                .await
+                .get::<BotDataKey>()
+                .context("获取Bot配置文件出现异常")?
+                .access()
+                .aiconfig
+                .clone()
+        };
+        log::info!("开始向服务器请求回复");
+        let result = tokio::select! {
+            result = aiconfig.chat(&http_client, content, history)=>{
+                result
+            }
+            _ = async {
+                //无限循环，所以这个分支不会结束
+                loop{
+                    // 广播正在思考
+                    new_message.channel_id.broadcast_typing(&ctx).await.ok();
+                    interval.tick().await;
+                }
+            }=>{
+                // 这里是不可达代码
+                log::info!("思考超时，正在返回消息");
+                Err(anyhow!("思考超时"))
+            }
+        };
+        result
     }
 }

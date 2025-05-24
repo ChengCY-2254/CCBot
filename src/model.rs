@@ -93,7 +93,7 @@ impl AIConfig {
         &self,
         http_client: &reqwest::Client,
         message: &str,
-        history: Vec<Message>,
+        history: &[Message],
     ) -> crate::Result<String> {
         let mut messages: Vec<AIMessage> = history.iter().map(into_ai_message).collect();
         messages.push(AIMessage::new("user", message));

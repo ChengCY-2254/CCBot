@@ -2,12 +2,12 @@
 //! This file contains the implementation of the HubSystem struct and its associated methods.
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
-use crate::{create_ephemeral_reply, ExportVec, PoiseContext};
+use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
 use chrono::FixedOffset;
 use futures::{Stream, StreamExt};
 use lazy_static::lazy_static;
 use poise::CreateReply;
-use serenity::all::{ActivityData, GetMessages, MessageBuilder};
+use serenity::all::{ActivityData, GetMessages};
 use std::ops::Deref;
 
 lazy_static! {
@@ -21,20 +21,19 @@ async fn ping(
     ctx: PoiseContext<'_>,
     #[description = "选择一个用户"] user: poise::serenity_prelude::User,
 ) -> crate::Result<()> {
-    let u = user;
+    let user_create_time = user
+        .created_at()
+        .to_utc()
+        .with_timezone(UTC8.deref())
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string();
+    let content = format!(
+        "<@{}> 用户id为 `{}` 创建于 {}",
+        user.id, user.id, user_create_time
+    );
+    let response = create_ephemeral_reply(content);
 
-    let response = MessageBuilder::new()
-        .mention(&u)
-        .push("创建于")
-        .push_bold_safe(ToString::to_string(
-            &u.created_at()
-                .to_utc()
-                .with_timezone(UTC8.deref())
-                .format("%Y-%M-%d %H:%M:%S"),
-        ))
-        .build();
-
-    ctx.say(response).await?;
+    ctx.send(response).await?;
     Ok(())
 }
 

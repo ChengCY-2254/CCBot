@@ -5,3 +5,5 @@ add_handler_mod!(guild_message);
 add_handler_mod!(manager);
 // AI对话模块
 add_handler_mod!(ai);
+// 服务启动时的挂钩
+add_handler_mod!(start);
