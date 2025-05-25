@@ -17,8 +17,8 @@ pub mod utils;
 
 use crate::keys::BotDataKey;
 use crate::keys::HttpKey;
-pub use anyhow::Result;
 pub use anyhow::Error;
+pub use anyhow::Result;
 use model::*;
 use serenity::prelude::*;
 use songbird::SerenityInit;
@@ -92,6 +92,7 @@ pub fn frame_work() -> poise::Framework<(), Error> {
                     poise::builtins::register_in_guild(ctx, &framework.options().commands, id)
                         .await?;
                 }
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(())
             })
         })

@@ -217,7 +217,7 @@ impl AiHandler {
         }
         let content = new_message.content.clone();
         //排除掉命令
-        if content.starts_with("/") {
+        if content.starts_with("/")||content.ends_with("reg") {
             return Ok(());
         }
         log::info!("用户 {} 正在与机器人私聊", new_message.author);
