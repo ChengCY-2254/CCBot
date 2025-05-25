@@ -4,16 +4,10 @@
 use crate::cmd_system::utils::get_http_client;
 use crate::{Error, ExportVec, PoiseContext};
 use anyhow::Context;
-use lazy_static::lazy_static;
 use poise::{CreateReply, async_trait};
 use serenity::all::{GuildChannel, MessageBuilder};
 use songbird::input::YoutubeDl;
 use songbird::{Event, EventContext, EventHandler, TrackEvent};
-
-lazy_static! {
-    ///播放状态，false为没有播放，true为播放
-    pub static ref PLAY_STATE: tokio::sync::RwLock<bool> = tokio::sync::RwLock::new(false);
-}
 
 /// 播放音乐或视频，可播放网站以yt-dlp支持的网站为准
 #[poise::command(slash_command)]
@@ -22,18 +16,6 @@ pub async fn play_music(
     #[description = "播放链接，支持BiliBili，更多网站请参见yt-dlp开源项目的支持列表"] url: String,
 ) -> Result<(), Error> {
     let guild_id = ctx.guild_id().with_context(|| "没有在服务器中")?;
-    {
-        let state = PLAY_STATE.read().await;
-        if *state {
-            ctx.send(
-                CreateReply::default()
-                    .ephemeral(true)
-                    .content("正在播放中，请稍后再试"),
-            )
-            .await?;
-            return Ok(());
-        }
-    }
     let http_client = get_http_client(&ctx).await?;
     log::info!("http客户端获取成功");
 

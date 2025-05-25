@@ -13,6 +13,7 @@ mod hub_system;
 mod keys;
 mod model;
 mod utils;
+mod db;
 
 use crate::keys::BotDataKey;
 pub use crate::keys::HttpKey;
@@ -50,12 +51,12 @@ pub async fn run(token: String) -> Result<()> {
     let mut client = {
         #[allow(unused_mut)]
         let mut client = Client::builder(token, gateway)
+            .register_songbird()
             .event_handler(hub_system::GuildMessageHandler)
             .event_handler(hub_system::ManagerHandler)
             .event_handler(hub_system::AiHandler)
             .event_handler(hub_system::StartHandler)
             .framework(frame_work())
-            .register_songbird()
             .type_map_insert::<HttpKey>(http_client)
             .type_map_insert::<BotDataKey>(data);
 

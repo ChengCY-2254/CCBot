@@ -57,7 +57,7 @@ where
         return;
     } else {
         std::fs::File::create(path)
-            .with_context(|| format!("Unable to open {:?}", path))
+            .map_err(|why| format!("Unable to open {:?}, because: {}", path,why))
             .unwrap();
         f()
     }

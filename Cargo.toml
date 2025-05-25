@@ -14,10 +14,12 @@ log = "0.4.27"
 paste = "1.0.15"
 poise = "0.6.1"
 reqwest = { version = "0.12.15", features = ["json"] }
+sea-orm = "1.1.11"
 serde = "1.0.219"
 serde_json = "1.0.140"
 serenity = { version = "0.12.4", features = ["builder", "collector", "client", "framework", "http", "model", "utils", "voice", "chrono", "cache"] }
 songbird = "0.5.0"
+sqlx = { version = "0.8.6",features = ["runtime-tokio-rustls","sqlite","macros"] }
 tokio = { version = "1.45.0", features = ["rt-multi-thread"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["local-time", "fmt"] }

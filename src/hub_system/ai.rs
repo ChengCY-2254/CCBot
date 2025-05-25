@@ -54,16 +54,16 @@ impl EventHandler for AiHandler {
                         log::error!("Error deleting message: {:?}", why);
                     }
                     log::info!("服务器回复成功，正在返回消息");
+                    // 检查文本长度，分段回复。
                     let response = format!("<@{}> {}", new_message.author.id, response);
-
-                    new_message
-                        .reply(ctx, response)
-                        .await
-                        .map_err(|why| {
-                            log::error!("出现了错误，请联系管理员 {}", why);
-                            anyhow!("出现了错误，请联系管理员 {}", why)
-                        })
-                        .unwrap();
+                    if response.len() > 1500 {
+                        let chunk_0 = response[0..=1500].to_string();
+                        let chunk_1 = response[1500..].to_string();
+                        Self::send_reply(&ctx,&new_message,chunk_0).await;
+                        Self::send_reply(&ctx,&new_message,chunk_1).await;
+                    } else {
+                        Self::send_reply(&ctx, &new_message, response).await;
+                    }
                 }
                 Err(why) => {
                     bot_message
@@ -150,5 +150,16 @@ impl AiHandler {
             }
         };
         result
+    }
+
+    async fn send_reply(ctx: &Context, new_message: &Message, response: String) {
+        new_message
+            .reply(ctx, response)
+            .await
+            .map_err(|why| {
+                log::error!("出现了错误，请联系管理员 {}", why);
+                anyhow!("出现了错误，请联系管理员 {}", why)
+            })
+            .unwrap();
     }
 }
