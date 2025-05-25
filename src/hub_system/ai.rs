@@ -1,12 +1,9 @@
 use crate::HttpKey;
 use crate::keys::BotDataKey;
 use anyhow::{Context as AnyHowContext, anyhow};
-use serenity::all::{
-    ButtonStyle, CreateActionRow, CreateButton, CreateInteractionResponse,
-    CreateInteractionResponseMessage, CreateMessage, EditMessage, GetMessages, Message, Ready,
-};
+use serenity::all::{EditMessage, GetMessages, Message};
 use serenity::async_trait;
-use serenity::prelude::{CacheHttp, Context, EventHandler};
+use serenity::prelude::{Context, EventHandler};
 use std::time::Duration;
 
 #[derive(Debug)]
@@ -59,47 +56,14 @@ impl EventHandler for AiHandler {
                     log::info!("服务器回复成功，正在返回消息");
                     let response = format!("<@{}> {}", new_message.author.id, response);
 
-                    let components = CreateActionRow::Buttons(vec![
-                        CreateButton::new("re.generate")
-                            .label("重新生成")
-                            .style(ButtonStyle::Primary)
-                            .emoji('🔁'),
-                    ]);
-
-                    let message_resp = CreateMessage::new()
-                        .components(vec![components])
-                        .content(response);
-
-                    let interaction = ctx
-                        .http()
-                        .send_message(new_message.channel_id, vec![], &message_resp)
+                    new_message
+                        .reply(ctx, response)
                         .await
-                        .unwrap()
-                        .await_component_interaction(&ctx.shard)
-                        .timeout(Duration::from_secs(60 * 5))
-                        .author_id(new_message.author.id)
-                        .await;
-                    if let Some(i) = interaction {
-                        if i.data.custom_id == "re.generate" {
-                            i.create_response(
-                                &ctx,
-                                CreateInteractionResponse::UpdateMessage(
-                                    CreateInteractionResponseMessage::default().content(
-                                        Self::request_ai_reply(
-                                            &ctx,
-                                            &new_message,
-                                            &history,
-                                            &new_message.content,
-                                        )
-                                        .await
-                                        .unwrap(),
-                                    ),
-                                ),
-                            )
-                            .await
-                            .unwrap()
-                        }
-                    }
+                        .map_err(|why| {
+                            log::error!("出现了错误，请联系管理员 {}", why);
+                            anyhow!("出现了错误，请联系管理员 {}", why)
+                        })
+                        .unwrap();
                 }
                 Err(why) => {
                     bot_message
@@ -117,7 +81,6 @@ impl EventHandler for AiHandler {
             }
         }
     }
-    async fn ready(&self, _ctx: Context, _data_about_bot: Ready) {}
 }
 
 impl AiHandler {
@@ -176,6 +139,8 @@ impl AiHandler {
                 loop{
                     // 广播正在思考
                     new_message.channel_id.broadcast_typing(&ctx).await.ok();
+                    // 每隔4秒发送一次思考消息
+                    log::info!("正在思考... 等待下一次发送思考消息");
                     interval.tick().await;
                 }
             }=>{
