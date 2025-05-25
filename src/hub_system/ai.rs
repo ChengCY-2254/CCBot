@@ -54,8 +54,9 @@ impl EventHandler for AiHandler {
                     }
                     log::info!("服务器回复成功，正在返回消息");
                     // 检查文本长度，分段回复。
-                    let raw_response = format!("<@{}> {}", new_message.author.id, response);
-                    
+                    // let raw_response = format!("<@{}> {}", new_message.author.id, response);
+                    let raw_response = response;
+
                     if raw_response.len() > 1500 {
                         // 对原始相应开始分块
                         let chunks = raw_response.chars().collect::<Vec<char>>();
@@ -106,7 +107,7 @@ impl AiHandler {
     async fn fetch_history(
         ctx: &Context,
         new_message: &Message,
-        user_id: serenity::model::id::UserId,
+        _user_id: serenity::model::id::UserId,
     ) -> Vec<Message> {
         let select = GetMessages::new().limit(50).before(new_message.id);
         new_message
@@ -115,7 +116,7 @@ impl AiHandler {
             .await
             .unwrap_or_default()
             .into_iter()
-            .filter(|msg| msg.author.id == user_id || msg.author.bot)
+            // .filter(|msg| msg.author.id == user_id || msg.author.bot)
             //获取开头不为`/`的消息，也就是排除命令内容
             .filter(|msg| !msg.content.starts_with("/"))
             .collect()
@@ -136,6 +137,11 @@ impl AiHandler {
         history: &[Message],
         content: &str,
     ) -> crate::Result<String> {
+        log::info!(
+            "频道 {:#?} 获取到的消息历史 {:?}",
+            new_message.channel_id.to_channel(ctx).await,
+            history
+        );
         let mut interval = tokio::time::interval(Duration::from_secs(4));
         let http_client = ctx.data.read().await.get::<HttpKey>().cloned().unwrap();
         let aiconfig = {
