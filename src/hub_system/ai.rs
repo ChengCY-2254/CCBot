@@ -55,14 +55,17 @@ impl EventHandler for AiHandler {
                     }
                     log::info!("服务器回复成功，正在返回消息");
                     // 检查文本长度，分段回复。
-                    let response = format!("<@{}> {}", new_message.author.id, response);
-                    if response.len() > 1500 {
-                        let chunk_0 = response[0..=1500].to_string();
-                        let chunk_1 = response[1500..].to_string();
-                        Self::send_reply(&ctx,&new_message,chunk_0).await;
-                        Self::send_reply(&ctx,&new_message,chunk_1).await;
+                    let raw_response = format!("<@{}> {}", new_message.author.id, response);
+                    if raw_response.len() > 1500 {
+                        // 对原始相应开始分块
+                        let chunks = raw_response.chars().collect::<Vec<char>>();
+                        let chunks_iter = chunks.chunks(1500);
+                        for chunk in chunks_iter {
+                            let chunk_str = chunk.iter().collect::<String>();
+                            Self::send_reply(&ctx, &new_message, chunk_str).await;
+                        }
                     } else {
-                        Self::send_reply(&ctx, &new_message, response).await;
+                        Self::send_reply(&ctx, &new_message, raw_response).await;
                     }
                 }
                 Err(why) => {

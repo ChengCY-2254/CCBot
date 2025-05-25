@@ -1,6 +1,6 @@
 use anyhow::anyhow;
-use cc_bot::{check_config_dir_exists, handle_file_if_not_dir};
 use tracing::instrument;
+use cc_bot::utils::{check_config_dir_exists, handle_file_if_not_dir};
 
 #[instrument]
 fn main() -> cc_bot::Result<()> {
@@ -17,7 +17,7 @@ fn main() -> cc_bot::Result<()> {
 
     let token = std::env::var("DISCORD_TOKEN")
         .map_err(|why| anyhow!("discord token未设置？请检查 config/.env 文件 \r\n{why}"))?;
-    let runtime = cc_bot::runtime();
+    let runtime = cc_bot::utils::runtime();
     runtime.block_on(async {
         cc_bot::run(token)
             .await
@@ -54,7 +54,10 @@ fn pre_check() -> cc_bot::Result<()> {
 }
 
 fn println_message() {
-    println!("欢迎使用CC-Bot，更多信息请查看");
+    println!(
+        "欢迎使用CC-Bot 当前版本:{}，更多信息请查看",
+        cc_bot::VERSION
+    );
     println!("https://github.com/ChengCY-2254/CCBot");
     println!("如果你有任何问题，请在GitHub上提交issue");
 }

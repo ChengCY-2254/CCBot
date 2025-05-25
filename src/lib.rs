@@ -9,20 +9,22 @@
 #[macro_use]
 mod macros;
 mod cmd_system;
+mod db;
 mod hub_system;
 mod keys;
 mod model;
-mod utils;
-mod db;
+pub mod utils;
 
 use crate::keys::BotDataKey;
-pub use crate::keys::HttpKey;
+use crate::keys::HttpKey;
 pub use anyhow::Result;
-pub use model::*;
-pub use serenity::prelude::*;
+pub use anyhow::Error;
+use model::*;
+use serenity::prelude::*;
 use songbird::SerenityInit;
-pub use utils::*;
-
+use utils::*;
+/// 版本信息
+pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
 /// 机器人的启动入口
 pub async fn run(token: String) -> Result<()> {
     // 成员加入/离开/更新
@@ -81,7 +83,7 @@ pub fn frame_work() -> poise::Framework<(), Error> {
     commands.append(&mut cmd_system::general_export());
     commands.append(&mut cmd_system::music_export());
 
-    let framework: poise::Framework<(), anyhow::Error> = poise::Framework::builder()
+    let framework: poise::Framework<(), Error> = poise::Framework::builder()
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 // 为每个缓存的公会注册命令
