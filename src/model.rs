@@ -12,7 +12,7 @@ pub type Data = UpSafeCell<DataInner>;
 pub type ExportVec = Vec<poise::Command<(), Error>>;
 
 lazy_static! {
-    pub static ref SYS_MESSAGE: AIMessage = AIMessage::new("system", include_str!("../ai_prompt"));
+    pub static ref SYS_MESSAGE: AIMessage = AIMessage::new("system", include_str!("../ai_prompt.md"));
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]

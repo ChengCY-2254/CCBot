@@ -14,6 +14,7 @@ impl EventHandler for AiHandler {
     #[allow(clippy::await_holding_refcell_ref)]
     async fn message(&self, ctx: Context, new_message: Message) {
         // 判断是否是私聊
+        #[allow(deprecated)]
         let is_private_message = new_message.is_private();
 
         if is_private_message {
