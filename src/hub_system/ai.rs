@@ -24,8 +24,7 @@ impl EventHandler for AiHandler {
         if new_message
             .mentions
             .iter()
-            .map(|mentions| mentions.id)
-            .any(|id| id == ctx.cache.current_user().id)
+            .any(|mentions| mentions.id == bot_id)
         {
             log::info!("用户 {} 提及了机器人", new_message.author);
             log::info!("内容是 {}", new_message.content);
@@ -56,21 +55,27 @@ impl EventHandler for AiHandler {
                     log::info!("服务器回复成功，正在返回消息");
                     // 检查文本长度，分段回复。
                     let raw_response = format!("<@{}> {}", new_message.author.id, response);
+                    
                     if raw_response.len() > 1500 {
                         // 对原始相应开始分块
                         let chunks = raw_response.chars().collect::<Vec<char>>();
                         // 看岔了，这是Vec，不是Chunks，所以要处以1500得到消息分块数。
-                        let chunk_count = chunks.len()/1500;
+                        let chunk_count = chunks.len() / 1500;
                         // 啊啊啊，我是傻叉，怎么会有正常人从0开始数数的啊啊啊
-                        log::info!("开始分块回复，共计 {}块", chunk_count+1);
+                        log::info!("开始分块回复，共计 {}块", chunk_count + 1);
                         let chunks_iter = chunks.chunks(1500).enumerate();
                         for (chunk_id, chunk) in chunks_iter {
-                            log::info!("正在发送第 {} 块", chunk_id+1);
-                            let chunk_str = format!(
-                                "<@{}> {}",
-                                new_message.author.id,
+                            log::info!("正在发送第 {} 块", chunk_id + 1);
+                            let chunk_str = if chunk_id == 0 {
                                 chunk.iter().collect::<String>()
-                            );
+                            } else {
+                                format!(
+                                    "<@{}> {}",
+                                    new_message.author.id,
+                                    chunk.iter().collect::<String>()
+                                )
+                            };
+
                             Self::send_reply(&ctx, &new_message, chunk_str).await;
                         }
                         log::info!("分块消息发送成功");
@@ -154,7 +159,7 @@ impl AiHandler {
                     // 广播正在思考
                     new_message.channel_id.broadcast_typing(&ctx).await.ok();
                     // 每隔4秒发送一次思考消息
-                    log::info!("正在思考... 等待下一次发送思考消息");
+                    log::info!("正在广播思考... 等待服务器返回");
                     interval.tick().await;
                 }
             }=>{

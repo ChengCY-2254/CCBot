@@ -86,12 +86,6 @@ pub struct AIConfig {
     response_format: HashMap<String, String>,
 }
 
-// impl AIConfig {
-//     /// 创建一个新的AI配置
-//     pub async fn new() -> Self {
-//         read_file("config/ai-config.json").unwrap()
-//     }
-// }
 impl AIConfig {
     /// 聊天接口调用
     pub async fn chat(
