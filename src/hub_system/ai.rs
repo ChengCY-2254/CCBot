@@ -64,7 +64,11 @@ impl EventHandler for AiHandler {
                         let chunks_iter = chunks.chunks(1500).enumerate();
                         for (chunk_id, chunk) in chunks_iter {
                             log::info!("正在发送第 {} 块", chunk_id);
-                            let chunk_str = chunk.iter().collect::<String>();
+                            let chunk_str = format!(
+                                "<@{}> {}",
+                                new_message.author.id,
+                                chunk.iter().collect::<String>()
+                            );
                             Self::send_reply(&ctx, &new_message, chunk_str).await;
                         }
                         log::info!("分块消息发送成功");
