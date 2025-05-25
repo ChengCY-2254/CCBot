@@ -61,10 +61,11 @@ impl EventHandler for AiHandler {
                         let chunks = raw_response.chars().collect::<Vec<char>>();
                         // 看岔了，这是Vec，不是Chunks，所以要处以1500得到消息分块数。
                         let chunk_count = chunks.len()/1500;
-                        log::info!("开始分块回复，共计 {}块", chunk_count);
+                        // 啊啊啊，我是傻叉，怎么会有正常人从0开始数数的啊啊啊
+                        log::info!("开始分块回复，共计 {}块", chunk_count+1);
                         let chunks_iter = chunks.chunks(1500).enumerate();
                         for (chunk_id, chunk) in chunks_iter {
-                            log::info!("正在发送第 {} 块", chunk_id);
+                            log::info!("正在发送第 {} 块", chunk_id+1);
                             let chunk_str = format!(
                                 "<@{}> {}",
                                 new_message.author.id,
