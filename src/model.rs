@@ -1,7 +1,8 @@
 use crate::{UpSafeCell, read_file};
+use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serenity::all::{ChannelId, Message};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::Path;
 
 /// 机器人需要保存的配置
@@ -9,6 +10,10 @@ pub type Data = UpSafeCell<DataInner>;
 
 /// [crate::macros::add_sub_mod]所使用的导出类型
 pub type ExportVec = Vec<poise::Command<(), Error>>;
+
+lazy_static! {
+    pub static ref SYS_MESSAGE: AIMessage = AIMessage::new("system", include_str!("../sys.prompt"));
+}
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(deny_unknown_fields)]
@@ -95,8 +100,9 @@ impl AIConfig {
         message: &str,
         history: &[Message],
     ) -> crate::Result<String> {
-        let mut messages: Vec<AIMessage> = history.iter().map(into_ai_message).collect();
-        messages.push(AIMessage::new("user", message));
+        let mut messages: VecDeque<AIMessage> = history.iter().map(into_ai_message).collect();
+        messages.push_front(SYS_MESSAGE.clone());
+        messages.push_back(AIMessage::new("user", message));
         let response = http_client
             .post(&self.url)
             .header("Authorization", format!("Bearer {}", self.token))

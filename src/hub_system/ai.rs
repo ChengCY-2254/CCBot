@@ -59,7 +59,8 @@ impl EventHandler for AiHandler {
                     if raw_response.len() > 1500 {
                         // 对原始相应开始分块
                         let chunks = raw_response.chars().collect::<Vec<char>>();
-                        let chunk_count = chunks.len();
+                        // 看岔了，这是Vec，不是Chunks，所以要处以1500得到消息分块数。
+                        let chunk_count = chunks.len()/1500;
                         log::info!("开始分块回复，共计 {}块", chunk_count);
                         let chunks_iter = chunks.chunks(1500).enumerate();
                         for (chunk_id, chunk) in chunks_iter {
