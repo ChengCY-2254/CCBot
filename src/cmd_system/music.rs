@@ -37,6 +37,7 @@ pub async fn play(
     let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let (http_client, manager) = get_http_and_songbird(ctx).await?;
     log::info!("获取语音客户端成功");
+    ctx.defer().await.map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
     // 加入语音频道
     if let Some(handler_lock) = manager.get(guild_id) {
         let mut handler = handler_lock.lock().await;
@@ -67,6 +68,15 @@ pub async fn search_bilibili(
 ) -> crate::Result<()> {
     let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let (http_client, manager) = get_http_and_songbird(ctx).await?;
+    //1. 为什么会发生 Unknown interaction？
+    // 
+    // (1) 未在 3 秒内响应 (HTTP 200)
+    // 
+    // Discord 要求 必须在 3 秒内对交互请求返回初始响应（ACK 或实际回复），否则会标记为 Unknown interaction。
+    // 解决方案：
+    // 使用 deferReply（如果是长时间操作，先返回“机器人正在处理”）。
+    // 如果无法在 3 秒内完成，先返回 ACK（type: 5 或 defer: true），再用 followUp 发送最终结果。
+    ctx.defer().await.map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
     if let Some(handler_lock) = manager.get(guild_id) {
         let mut handler = handler_lock.lock().await;
         log::info!("获取语音频道成功，正在搜索内容");
