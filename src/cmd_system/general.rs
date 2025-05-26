@@ -3,13 +3,13 @@
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
 use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
+use anyhow::anyhow;
 use chrono::FixedOffset;
 use futures::{Stream, StreamExt};
 use lazy_static::lazy_static;
 use poise::CreateReply;
 use serenity::all::{ActivityData, GetMessages};
 use std::ops::Deref;
-use anyhow::anyhow;
 
 lazy_static! {
     /// UTC+8时区计算
@@ -39,7 +39,7 @@ async fn ping(
 }
 
 /// 注册命令的命令，需要使用@`[yourbot]` register来进行使用
-#[poise::command(prefix_command, aliases("reg"),owners_only)]
+#[poise::command(prefix_command, aliases("reg"), owners_only)]
 async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
     poise::builtins::register_application_commands_buttons(ctx).await?;
     Ok(())
@@ -62,8 +62,6 @@ async fn set_status(
     #[description = "内容"] activity_name: String,
     #[description = "活动网址"] url: Option<String>,
 ) -> crate::Result<()> {
-    //todo 需要手动校验用户权限，看来sqlx还是要提上日程了啊。
-    // 我讨厌sql
     {
         let activity_name = activity_name.clone();
         match activity_type.as_str() {
@@ -118,7 +116,7 @@ async fn autocomplete_activity_type(
 )]
 async fn clear(
     ctx: PoiseContext<'_>,
-    #[description = "清除的消息数量"] count: u8,
+    #[description = "清除的消息数量，如果是私聊，只能删除机器人自己的消息"] count: u8,
 ) -> crate::Result<()> {
     let messages = ctx
         .channel_id()
@@ -128,19 +126,24 @@ async fn clear(
     if messages.is_empty() {
         let response = create_ephemeral_reply("没有找到可删除的消息");
         ctx.send(response).await?;
+        return Ok(())
     } else {
-        ctx.defer().await.map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
+        ctx.defer()
+            .await
+            .map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
+        let mut delete_count = 0u16;
         for message in &messages {
             // 如果是用户消息并且是私聊就跳过。
             // 因为机器人无法删除私聊中的用户消息
             #[allow(deprecated)]
-            if !message.author.bot&&message.is_private() { 
-                continue
+            if !message.author.bot && message.is_private() {
+                continue;
+            } else {
+                message.delete(ctx.serenity_context()).await?;
+                delete_count+=1;
             }
-            message.delete(ctx.serenity_context()).await?;
         }
-        let response = create_ephemeral_reply(format!("已删除{}条消息", messages.len()));
-
+        let response = create_ephemeral_reply(format!("已删除{}条消息", delete_count));
         ctx.send(response).await?;
     }
     Ok(())

@@ -9,6 +9,7 @@
 #[macro_use]
 mod macros;
 mod cmd_system;
+#[cfg(feature = "db")]
 mod db;
 mod hub_system;
 mod keys;
