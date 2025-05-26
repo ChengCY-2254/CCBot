@@ -98,7 +98,8 @@ impl AIConfig {
     pub fn init_prompt(&mut self) -> crate::Result<()> {
         if let Some(file) = self.system_prompt_file.file_name() {
             let file = file.to_str().unwrap().to_string();
-            self.use_others_prompt(file)?
+            self.use_others_prompt(&file)?;
+            log::info!("提示 {} 加载成功", file);
         }
         Ok(())
     }
@@ -110,7 +111,6 @@ impl AIConfig {
         history: &[Message],
     ) -> crate::Result<String> {
         let mut messages: VecDeque<AIMessage> = history.iter().map(into_ai_message).collect();
-        // messages.push_front(SYS_MESSAGE.clone());
         messages.push_front(AIMessage::new(
             "system",
             SYSTEM_PROMPT_CACHE.access().clone().as_str(),
@@ -164,7 +164,7 @@ impl AIConfig {
         }
     }
     /// 切换成其它系统提示，并重新读取内容。
-    pub fn use_others_prompt(&mut self, file_name: String) -> crate::Result<()> {
+    pub fn use_others_prompt(&mut self, file_name: &str) -> crate::Result<()> {
         self.system_prompt_file = PathBuf::new().join(format!("config/{}", file_name));
         let sys_prompt_content = std::fs::read_to_string(self.system_prompt_file.clone())?;
         let mut prompt = SYSTEM_PROMPT_CACHE.exclusive_access();

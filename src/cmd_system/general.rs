@@ -38,7 +38,7 @@ async fn ping(
 }
 
 /// 注册命令的命令，需要使用@`[yourbot]` register来进行使用
-#[poise::command(prefix_command, aliases("reg"))]
+#[poise::command(prefix_command, aliases("reg"),owners_only)]
 async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
     poise::builtins::register_application_commands_buttons(ctx).await?;
     Ok(())
@@ -48,8 +48,10 @@ async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
 #[poise::command(
     slash_command,
     aliases("status"),
+    rename = "status",
     required_permissions = "ADMINISTRATOR",
     default_member_permissions = "ADMINISTRATOR",
+    owners_only
 )]
 async fn set_status(
     ctx: PoiseContext<'_>,

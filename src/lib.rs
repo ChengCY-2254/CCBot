@@ -22,6 +22,8 @@ pub use anyhow::Result;
 use model::*;
 use serenity::prelude::*;
 use songbird::SerenityInit;
+use std::collections::HashSet;
+use serenity::all::UserId;
 use utils::*;
 /// 版本信息
 pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
@@ -48,6 +50,7 @@ pub async fn run(token: String) -> Result<()> {
             anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
         })?;
         // 初始化ai提示
+        log::info!("开始初始化ai系统提示");
         data.aiconfig.init_prompt()?;
         UpSafeCell::new(data)
     };
@@ -84,6 +87,8 @@ pub fn frame_work() -> poise::Framework<(), Error> {
     commands.append(&mut cmd_system::manage_export());
     commands.append(&mut cmd_system::general_export());
     commands.append(&mut cmd_system::music_export());
+    let mut owners =  HashSet::new();
+    owners.insert(UserId::new(743352355264659548));
 
     let framework: poise::Framework<(), Error> = poise::Framework::builder()
         .setup(|ctx, _ready, framework| {
@@ -99,6 +104,7 @@ pub fn frame_work() -> poise::Framework<(), Error> {
             })
         })
         .options(poise::FrameworkOptions {
+            owners,
             commands,
             manual_cooldowns: false,
             ..Default::default()

@@ -28,7 +28,8 @@ lazy_static! {
     subcommands("add", "remove", "list"),
     subcommand_required,
     required_permissions = "ADMINISTRATOR",
-    prefix_command
+    prefix_command,
+    owners_only
 )]
 /// 管理撤回频道，机器人自动删除该频道中的消息
 pub async fn withdraw(_ctx: PoiseContext<'_>) -> crate::Result<()> {
@@ -157,7 +158,7 @@ async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::R
     rename = "switch_prompt",
     required_permissions = "ADMINISTRATOR",
     default_member_permissions = "ADMINISTRATOR",
-    guild_only,
+    guild_only
 )]
 pub async fn switch_system_prompt(
     ctx: PoiseContext<'_>,
@@ -179,7 +180,7 @@ async fn handle_switch_prompt(ctx: PoiseContext<'_>, file_name: String) -> crate
             .get::<BotDataKey>()
             .context("app数据目录访问失败")?;
         let mut bot_data = bot_data.exclusive_access();
-        bot_data.aiconfig.use_others_prompt(file_name)?;
+        bot_data.aiconfig.use_others_prompt(&file_name)?;
         let (prompt_name, content) = bot_data.aiconfig.get_system_prompt()?;
         (prompt_name, content)
     };
