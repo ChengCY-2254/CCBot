@@ -12,7 +12,7 @@ use songbird::{Event, EventContext, EventHandler, Songbird, TrackEvent};
 use std::sync::Arc;
 
 /// 音乐相关命令
-#[poise::command(slash_command, subcommands("play", "join", "leave", "stop"))]
+#[poise::command(slash_command, subcommands("search_bilibili","play", "join", "leave", "stop"))]
 pub async fn music(_ctx: PoiseContext<'_>) -> crate::Result<()> {
     Ok(())
 }
