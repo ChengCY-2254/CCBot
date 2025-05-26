@@ -55,7 +55,7 @@ pub async fn play_music(
 #[poise::command(slash_command, rename = "play_for_bilibili")]
 pub async fn search_bilibili(
     ctx: PoiseContext<'_>,
-    #[description = "搜索内容"] search_key_word: String,
+    #[description = "搜索内容"] url: String,
 ) -> crate::Result<()> {
     let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let (http_client, manager) = get_http_and_songbird(ctx).await?;
@@ -63,11 +63,11 @@ pub async fn search_bilibili(
         let mut handler = handler_lock.lock().await;
         log::info!("获取语音频道成功，正在搜索内容");
         let (source_url, title) = {
-            let search = format!(
-                "https://search.bilibili.com/all?keyword={}&order=click",
-                search_key_word
-            );
-            let mut src = YoutubeDl::new_search(http_client.clone(), search);
+            // let search = format!(
+            //     "https://search.bilibili.com/all?keyword={}&order=click",
+            //     url
+            // );
+            let mut src = YoutubeDl::new_search(http_client.clone(), url);
             let mut src = src.search(Some(1)).await?;
             let src = src.next().context("好像没有结果哦")?;
             let source_url = src.source_url.context("获取链接失败")?;
@@ -182,7 +182,7 @@ pub async fn leave(
 /// 停止播放当前音乐
 #[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
 pub async fn stop(ctx: PoiseContext<'_>) -> crate::Result<()> {
-    let guild_id = ctx.guild_id().with_context(|| "没有在服务器中")?;
+    let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let manager = songbird::get(ctx.serenity_context())
         .await
         .with_context(|| "语音客户端初始化中")?
