@@ -79,13 +79,15 @@ pub async fn search_bilibili(
             log::info!("获取到标题 {title} link {source_url}");
             (source_url, title)
         };
-        // handler.stop();
-        let response = format!("开始播放 [{title}]({source_url})");
-        ctx.reply(response).await?;
-
-        let _ = handler.play_input(YoutubeDl::new(http_client, source_url).into());
-
+        handler.stop();
+        log::info!("停止指令发布成功");
+        let _ = handler.play_input(YoutubeDl::new(http_client, source_url.clone()).into());
         log::info!("开始播放 {}", title);
+        log::info!("开始响应信息");
+        let response = format!("开始播放 [{title}]({source_url})");
+        ctx.send(CreateReply::default().content(response)).await?;
+
+        log::info!("响应完成");
         return Ok(());
     }
 
