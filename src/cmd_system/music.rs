@@ -12,7 +12,10 @@ use songbird::{Event, EventContext, EventHandler, Songbird, TrackEvent};
 use std::sync::Arc;
 
 /// 音乐相关命令
-#[poise::command(slash_command, subcommands("search_bilibili","play", "join", "leave", "stop"))]
+#[poise::command(
+    slash_command,
+    subcommands("search_bilibili", "play", "join", "leave", "stop")
+)]
 pub async fn music(_ctx: PoiseContext<'_>) -> crate::Result<()> {
     Ok(())
 }
@@ -61,7 +64,7 @@ pub async fn search_bilibili(
         log::info!("获取语音频道成功，正在搜索内容");
         let (source_url, title) = {
             let mut src = YoutubeDl::new_search(http_client.clone(), key_word);
-            let mut src = src.search(Some("bilisearch"), Some(1)).await?;
+            let mut src = src.search(Some("bilisearch"), Some(5)).await?;
             let src = src.next().context("好像没有结果哦")?;
             let source_url = src.source_url.context("获取链接失败")?;
             let title = src.title.unwrap_or_default();
@@ -72,10 +75,7 @@ pub async fn search_bilibili(
         let _ = handler.play_input(YoutubeDl::new(http_client, source_url.clone()).into());
 
         log::info!("开始播放 {}", title);
-        let response = MessageBuilder::new()
-            .push_bold_safe(format!("开始播放 {}", title))
-            .push(source_url)
-            .build();
+        let response = format!("开始播放 [{title}]({source_url})");
 
         ctx.reply(response).await?;
         return Ok(());
