@@ -195,13 +195,20 @@ impl AIMessage {
 
 /// 将serenity的Message转换为AIMessage
 pub fn into_ai_message(message: &Message) -> AIMessage {
+    let message_id = message.id;
+    let message_author_id = message.author.id;
+    let message_times_map = message.timestamp;
     let role = if message.author.bot {
         "assistant".to_string()
     } else {
         "user".to_string()
     };
-    AIMessage {
-        role,
-        content: message.content.clone(),
-    }
+
+    let content = format!(
+        "SYSTEM：以下内容为补充参考信息\r\n```message_id:{message_id}\r\nmessage_author_id:{message_author_id}\r\nmessage_times_map:{message_times_map}\r\n```\
+        SYSTEM:补充说明结束，以下是用户内容\r\n\
+        {}",
+        message.content
+    );
+    AIMessage { role, content }
 }

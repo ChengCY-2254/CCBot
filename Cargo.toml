@@ -2,7 +2,7 @@
 name = "cc-bot"
 version = "0.1.0"
 edition = "2024"
-
+repository = "https://github.com/ChengCY-2254/CCBot.git"
 [dependencies]
 anyhow = "1.0.98"
 chrono = "0.4.41"
@@ -17,7 +17,7 @@ poise = "0.6.1"
 serenity = { version = "0.12.4", features = ["builder", "collector", "client", "framework", "http", "model", "utils", "voice", "chrono", "cache"] }
 #songbird = "0.5.0"
 songbird = { git = "https://github.com/ChengCY-2254/songbird" }
-sqlx = { version = "0.8.6",features = ["runtime-tokio-rustls","sqlite","macros"] }
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "sqlite", "macros"] }
 sea-orm = "1.1.11"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["local-time", "fmt"] }
