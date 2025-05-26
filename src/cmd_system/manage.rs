@@ -8,7 +8,20 @@
 use crate::keys::BotDataKey;
 use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
 use anyhow::{Context, anyhow};
+use futures::Stream;
+use futures::StreamExt;
+use lazy_static::lazy_static;
 use serenity::all::{CreateMessage, GuildChannel, MessageBuilder};
+use std::ops::Deref;
+use std::path::PathBuf;
+
+lazy_static! {
+    pub static ref CONFIG_DIR: PathBuf = {
+        let mut buf = PathBuf::new();
+        buf.push("config");
+        buf
+    };
+}
 
 #[poise::command(
     slash_command,
@@ -137,7 +150,73 @@ async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::R
     }
     Ok(())
 }
+/// 切换系统提示
+/// 自动补全程序需要给出路径下的md文件位置
+#[poise::command(
+    slash_command,
+    rename = "switch_prompt",
+    required_permissions = "ADMINISTRATOR",
+    default_member_permissions = "ADMINISTRATOR",
+    guild_only,
+)]
+pub async fn switch_system_prompt(
+    ctx: PoiseContext<'_>,
+    #[autocomplete = "autocomplete_ai_prompt_list"]
+    #[description = "角色"]
+    file_name: Option<String>,
+) -> crate::Result<()> {
+    if let Some(file_name) = file_name {
+        handle_switch_prompt(ctx, file_name).await
+    } else {
+        handle_show_prompt(ctx).await
+    }
+}
+/// 处理系统提示切换逻辑
+async fn handle_switch_prompt(ctx: PoiseContext<'_>, file_name: String) -> crate::Result<()> {
+    let (prompt, content) = {
+        let type_map = ctx.serenity_context().data.write().await;
+        let bot_data = type_map
+            .get::<BotDataKey>()
+            .context("app数据目录访问失败")?;
+        let mut bot_data = bot_data.exclusive_access();
+        bot_data.aiconfig.use_others_prompt(file_name)?;
+        let (prompt_name, content) = bot_data.aiconfig.get_system_prompt()?;
+        (prompt_name, content)
+    };
+    let reply = create_ephemeral_reply(format!("已使用 {} 的提示文件\r\n {}", prompt, content));
+    ctx.send(reply).await?;
+    Ok(())
+}
 
+/// 自动补全程序，把config目录下的md文件过滤出来返回给客户端
+async fn handle_show_prompt(ctx: PoiseContext<'_>) -> crate::Result<()> {
+    let type_map = ctx.serenity_context().data.read().await;
+    let bot_data = type_map
+        .get::<BotDataKey>()
+        .context("app数据目录访问失败")?;
+    let (prompt, content) = bot_data.access().aiconfig.get_system_prompt()?;
+    let reply = create_ephemeral_reply(format!("已使用 {} 的提示文件\r\n {}", prompt, content));
+    ctx.send(reply).await?;
+    Ok(())
+}
+
+async fn autocomplete_ai_prompt_list(
+    _ctx: PoiseContext<'_>,
+    partial: &str,
+) -> impl Stream<Item = String> {
+    let files = std::fs::read_dir(CONFIG_DIR.deref()).unwrap();
+    let names = files
+        .into_iter()
+        .map(|dir| {
+            let file_name = dir.unwrap().file_name();
+            let file_name = file_name.to_str().unwrap();
+            file_name.to_string()
+        })
+        .filter(|name| name.ends_with(".md"))
+        .collect::<Vec<_>>();
+    futures::stream::iter(names)
+        .filter(move |name| futures::future::ready(name.starts_with(partial)))
+}
 pub fn manage_export() -> ExportVec {
-    vec![withdraw()]
+    vec![withdraw(), switch_system_prompt()]
 }

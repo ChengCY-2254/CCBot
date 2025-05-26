@@ -43,10 +43,12 @@ pub async fn run(token: String) -> Result<()> {
         GatewayIntents::DIRECT_MESSAGES;
     let http_client = reqwest::Client::new();
     let data = unsafe {
-        let data = DataInner::new("config/data.json").map_err(|e| {
+        let mut data = DataInner::new("config/data.json").map_err(|e| {
             log::error!("Error loading data: {:?}", e);
             anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
         })?;
+        // 初始化ai提示
+        data.aiconfig.init_prompt()?;
         UpSafeCell::new(data)
     };
 

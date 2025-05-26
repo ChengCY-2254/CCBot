@@ -1,9 +1,10 @@
 use crate::{UpSafeCell, read_file};
+use anyhow::anyhow;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serenity::all::{ChannelId, Message};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// 机器人需要保存的配置
 pub type Data = UpSafeCell<DataInner>;
@@ -12,7 +13,12 @@ pub type Data = UpSafeCell<DataInner>;
 pub type ExportVec = Vec<poise::Command<(), Error>>;
 
 lazy_static! {
-    pub static ref SYS_MESSAGE: AIMessage = AIMessage::new("system", include_str!("../ai_prompt.md"));
+    // pub static ref SYS_MESSAGE: AIMessage =
+    //     AIMessage::new("system", include_str!("../ai_prompt.md"));
+    pub static ref SYS_USER_PTOMPT_MESSAGE: AIMessage =
+        AIMessage::new("system", "以下是用户的最新输入");
+    /// 在这里缓存住系统提示
+    pub static ref SYSTEM_PROMPT_CACHE: UpSafeCell<String> = unsafe {UpSafeCell::new(String::new())};
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -84,9 +90,18 @@ pub struct AIConfig {
     frequency_penalty: f32,
     n: i8,
     response_format: HashMap<String, String>,
+    /// 系统提示的路径
+    system_prompt_file: PathBuf,
 }
 
 impl AIConfig {
+    pub fn init_prompt(&mut self) -> crate::Result<()> {
+        if let Some(file) = self.system_prompt_file.file_name() {
+            let file = file.to_str().unwrap().to_string();
+            self.use_others_prompt(file)?
+        }
+        Ok(())
+    }
     /// 聊天接口调用
     pub async fn chat(
         &self,
@@ -95,7 +110,12 @@ impl AIConfig {
         history: &[Message],
     ) -> crate::Result<String> {
         let mut messages: VecDeque<AIMessage> = history.iter().map(into_ai_message).collect();
-        messages.push_front(SYS_MESSAGE.clone());
+        // messages.push_front(SYS_MESSAGE.clone());
+        messages.push_front(AIMessage::new(
+            "system",
+            SYSTEM_PROMPT_CACHE.access().clone().as_str(),
+        ));
+        messages.push_back(SYS_USER_PTOMPT_MESSAGE.clone());
         messages.push_back(AIMessage::new("user", message));
         let response = http_client
             .post(&self.url)
@@ -128,6 +148,30 @@ impl AIConfig {
                 response.status()
             ))
         }
+    }
+    /// 第一个是文件名，第二个是内容
+    pub fn get_system_prompt(&self) -> crate::Result<(String, String)> {
+        let file_name = self
+            .system_prompt_file
+            .as_path()
+            .file_name()
+            .map(|os_str| os_str.to_string_lossy().into_owned());
+        let prompt_content = SYSTEM_PROMPT_CACHE.access().clone();
+        if let Some(file_name) = file_name {
+            Ok((file_name, prompt_content))
+        } else {
+            Err(anyhow!("未设置系统提示！"))
+        }
+    }
+    /// 切换成其它系统提示，并重新读取内容。
+    pub fn use_others_prompt(&mut self, file_name: String) -> crate::Result<()> {
+        self.system_prompt_file = PathBuf::new().join(format!("config/{}", file_name));
+        let sys_prompt_content = std::fs::read_to_string(self.system_prompt_file.clone())?;
+        let mut prompt = SYSTEM_PROMPT_CACHE.exclusive_access();
+        prompt.clear();
+        prompt.push_str(&sys_prompt_content);
+        prompt.shrink_to_fit();
+        Ok(())
     }
 }
 

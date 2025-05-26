@@ -48,7 +48,8 @@ async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
 #[poise::command(
     slash_command,
     aliases("status"),
-    required_permissions = "ADMINISTRATOR"
+    required_permissions = "ADMINISTRATOR",
+    default_member_permissions = "ADMINISTRATOR",
 )]
 async fn set_status(
     ctx: PoiseContext<'_>,
@@ -58,6 +59,8 @@ async fn set_status(
     #[description = "内容"] activity_name: String,
     #[description = "活动网址"] url: Option<String>,
 ) -> crate::Result<()> {
+    //todo 需要手动校验用户权限，看来sqlx还是要提上日程了啊。
+    // 我讨厌sql
     {
         let activity_name = activity_name.clone();
         match activity_type.as_str() {

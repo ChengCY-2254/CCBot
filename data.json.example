@@ -15,6 +15,7 @@
          "n": 1,
          "response_format": {
            "type": "text"
-         }
+         },
+         "system_prompt_file":""
        }
 }
