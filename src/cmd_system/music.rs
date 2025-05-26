@@ -85,9 +85,18 @@ pub async fn search_bilibili(
         log::info!("开始播放 {}", title);
         log::info!("开始响应信息");
         let response = format!("开始播放 [{title}]({source_url})");
-        ctx.send(CreateReply::default().content(response)).await?;
-
-        log::info!("响应完成");
+        let reply = async || ctx.reply(response).await;
+        loop {
+            match reply.clone()().await {
+                Ok(_) => {
+                    log::info!("响应完成");
+                    break;
+                }
+                Err(why) => {
+                    log::error!("响应时发生错误 {}", why)
+                }
+            }
+        }
         return Ok(());
     }
 
