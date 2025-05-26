@@ -4,7 +4,7 @@
 use crate::cmd_system::utils::get_http_client;
 use crate::utils::UpSafeCell;
 use crate::{ExportVec, PoiseContext};
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use lazy_static::lazy_static;
 use poise::{CreateReply, async_trait};
 use reqwest::Client;
@@ -85,18 +85,22 @@ pub async fn search_bilibili(
         log::info!("开始播放 {}", title);
         log::info!("开始响应信息");
         let response = format!("开始播放 [{title}]({source_url})");
-        let reply = async || ctx.reply(response).await;
-        loop {
-            match reply.clone()().await {
-                Ok(_) => {
-                    log::info!("响应完成");
-                    break;
-                }
-                Err(why) => {
-                    log::error!("响应时发生错误 {}", why)
-                }
-            }
-        }
+        // let reply = async || ctx.reply(response).await;
+        // loop {
+        //     match reply.clone()().await {
+        //         Ok(_) => {
+        //             log::info!("响应完成");
+        //             break;
+        //         }
+        //         Err(why) => {
+        //             log::error!("响应时发生错误 {}", why);
+        //             continue
+        //         }
+        //     }
+        // }
+        ctx.reply(response)
+            .await
+            .map_err(|why| anyhow!("响应时发生错误 {why}"))?;
         return Ok(());
     }
 
