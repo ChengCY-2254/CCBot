@@ -12,17 +12,14 @@ use songbird::{Event, EventContext, EventHandler, Songbird, TrackEvent};
 use std::sync::Arc;
 
 /// 音乐相关命令
-#[poise::command(
-    slash_command,
-    subcommands("play_music", "search_bilibili", "join", "leave", "stop")
-)]
+#[poise::command(slash_command, subcommands("play", "join", "leave", "stop"))]
 pub async fn music(_ctx: PoiseContext<'_>) -> crate::Result<()> {
     Ok(())
 }
 
 /// 播放音乐或视频，可播放网站以yt-dlp支持的网站为准
 #[poise::command(slash_command)]
-pub async fn play_music(
+pub async fn play(
     ctx: PoiseContext<'_>,
     #[description = "播放链接，支持BiliBili，更多网站请参见yt-dlp开源项目的支持列表"] url: String,
 ) -> crate::Result<()> {
@@ -55,7 +52,7 @@ pub async fn play_music(
 #[poise::command(slash_command, rename = "play_for_bilibili")]
 pub async fn search_bilibili(
     ctx: PoiseContext<'_>,
-    #[description = "搜索内容"] url: String,
+    #[description = "搜索内容"] key_word: String,
 ) -> crate::Result<()> {
     let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let (http_client, manager) = get_http_and_songbird(ctx).await?;
@@ -63,12 +60,8 @@ pub async fn search_bilibili(
         let mut handler = handler_lock.lock().await;
         log::info!("获取语音频道成功，正在搜索内容");
         let (source_url, title) = {
-            // let search = format!(
-            //     "https://search.bilibili.com/all?keyword={}&order=click",
-            //     url
-            // );
-            let mut src = YoutubeDl::new_search(http_client.clone(), url);
-            let mut src = src.search(Some(1)).await?;
+            let mut src = YoutubeDl::new_search(http_client.clone(), key_word);
+            let mut src = src.search(Some("bilisearch"), Some(1)).await?;
             let src = src.next().context("好像没有结果哦")?;
             let source_url = src.source_url.context("获取链接失败")?;
             let title = src.title.unwrap_or_default();
