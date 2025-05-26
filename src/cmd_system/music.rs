@@ -65,6 +65,7 @@ pub async fn search_bilibili(
             let src = src.next().context("好像没有结果哦")?;
             let source_url = src.source_url.context("获取链接失败")?;
             let title = src.title.unwrap_or_default();
+            log::info!("获取到标题 {title} link {source_url}");
             (source_url, title)
         };
         log::info!("获取到 {} 即将开始播放 {}", title, source_url);
