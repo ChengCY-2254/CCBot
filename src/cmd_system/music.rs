@@ -12,7 +12,10 @@ use songbird::{Event, EventContext, EventHandler, Songbird, TrackEvent};
 use std::sync::Arc;
 
 /// 音乐相关命令
-#[poise::command(slash_command, subcommands("play_music", "search_bilibili"))]
+#[poise::command(
+    slash_command,
+    subcommands("play_music", "search_bilibili", "join", "leave", "stop")
+)]
 pub async fn music(_ctx: PoiseContext<'_>) -> crate::Result<()> {
     Ok(())
 }
@@ -61,7 +64,7 @@ pub async fn search_bilibili(
         log::info!("获取语音频道成功，正在搜索内容");
         let (source_url, title) = {
             let search = format!(
-                "https://search.bilibili.com/all?keyword={}",
+                "https://search.bilibili.com/all?keyword={}&order=click",
                 search_key_word
             );
             let mut src = YoutubeDl::new_search(http_client.clone(), search);
@@ -74,7 +77,7 @@ pub async fn search_bilibili(
         log::info!("获取到 {} 即将开始播放 {}", title, source_url);
         let _ = handler.play_input(YoutubeDl::new(http_client, source_url.clone()).into());
 
-        log::info!("开始播放 {}",title);
+        log::info!("开始播放 {}", title);
         let response = MessageBuilder::new()
             .push_bold_safe(format!("开始播放 {}", title))
             .push(source_url)
@@ -197,5 +200,5 @@ pub async fn stop(ctx: PoiseContext<'_>) -> crate::Result<()> {
 }
 
 pub fn music_export() -> ExportVec {
-    vec![play_music(), join(), leave(), stop()]
+    vec![music()]
 }
