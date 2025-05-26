@@ -13,9 +13,10 @@
 
 **语音服务**：
 
-- `/join`:加入语音频道
-- `/leave`:离开语音频道
-- `/play_music <url>`:播放音频
+- `/music join <channel>`:加入语音频道
+- `/music leave <channel>`:离开语音频道
+- `/music play_for_bilibili <keyword>`:从哔哩哔哩搜索并播放音频
+- `/music play <url>`:从url播放一首音乐，使用[yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - `/stop`: 停止播放
 
 **通用命令**
@@ -23,8 +24,15 @@
 - `ping`: 查看用户创建时间
 - `set_status`:设置机器人状态
 - `clear <amount>`:清除<amount>聊天记录
+- `/switch_prompt <file_name>`:设置ai的系统提示词，提示词存放路径在`config/`下，扩展名为`.md`
 
-对于`/play_music`命令，支持Youtube和Bilibili的音频播放，理论上支持youtube，但由于yt-dlp的限制，可能会出现一些问题。
+**管理命令**
+
+- `/withdraw add <channel>`:将一个频道添加到撤回列表
+- `/withdraw remove <channel>`:将一个频道从撤回列表移除
+
+对于`/music play`命令，支持Youtube和Bilibili的音频播放，理论上支持youtube，但由于yt-dlp的限制，可能会出现一些问题。
+
 对于ai对话，需要@机器人，机器人会向上回溯50条消息，并过滤出你与机器人的消息进行对话。
 
 ## 安装&运行
@@ -49,7 +57,8 @@ rust编译问题请参考rust给出的报错，安装对应的依赖包即可。
 - [x] 添加版本号，使用`build.rs`来记录git的id并从env中获取版本号。
 - [x] 精简配置文件
 - [x] 给受到聊天管控的区域添加管控公告。
-- [x] 原神，启动！2025/05/24
+- [ ] 原神，启动！2025/05/24
 - [ ] 设置某个频道为欢迎频道。
-- [ ] 未添加到语音频道的时候使用播放音乐给出正确的错误提示。
+- [x] 未添加到语音频道的时候使用播放音乐给出正确的错误提示。
 - [ ] 如果是dm频道，那么就只需要删除自己的消息即可。
+- [x] 为/switch_prompt 添加仅管理员可用，而不是只能在频道中使用。

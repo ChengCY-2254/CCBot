@@ -13,8 +13,6 @@ pub type Data = UpSafeCell<DataInner>;
 pub type ExportVec = Vec<poise::Command<(), Error>>;
 
 lazy_static! {
-    // pub static ref SYS_MESSAGE: AIMessage =
-    //     AIMessage::new("system", include_str!("../ai_prompt.md"));
     pub static ref SYS_USER_PTOMPT_MESSAGE: AIMessage =
         AIMessage::new("system", "以下是用户的最新输入");
     /// 在这里缓存住系统提示
@@ -24,7 +22,6 @@ lazy_static! {
 #[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(deny_unknown_fields)]
 /// 用户数据
-/// todo 要将其序列化到磁盘上存储
 /// md又多了一个配置文件，这个还要反复读写
 /// 明天的任务是把这帮配置文件都移动到一个文件夹中
 /// 眼不见心不烦

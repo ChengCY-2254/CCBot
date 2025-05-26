@@ -158,7 +158,7 @@ async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::R
     rename = "switch_prompt",
     required_permissions = "ADMINISTRATOR",
     default_member_permissions = "ADMINISTRATOR",
-    guild_only
+    owners_only
 )]
 pub async fn switch_system_prompt(
     ctx: PoiseContext<'_>,
@@ -181,6 +181,7 @@ async fn handle_switch_prompt(ctx: PoiseContext<'_>, file_name: String) -> crate
             .context("app数据目录访问失败")?;
         let mut bot_data = bot_data.exclusive_access();
         bot_data.aiconfig.use_others_prompt(&file_name)?;
+        bot_data.save("config")?;
         let (prompt_name, content) = bot_data.aiconfig.get_system_prompt()?;
         (prompt_name, content)
     };

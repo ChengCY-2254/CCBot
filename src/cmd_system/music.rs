@@ -2,14 +2,22 @@
 //! 语音方向的内容
 
 use crate::cmd_system::utils::get_http_client;
+use crate::utils::UpSafeCell;
 use crate::{ExportVec, PoiseContext};
 use anyhow::Context;
+use lazy_static::lazy_static;
 use poise::{CreateReply, async_trait};
 use reqwest::Client;
 use serenity::all::{GuildChannel, MessageBuilder};
 use songbird::input::YoutubeDl;
 use songbird::{Event, EventContext, EventHandler, Songbird, TrackEvent};
 use std::sync::Arc;
+
+lazy_static! {
+    /// 当前加入的语音频道id
+    pub static ref CURRENT_JOIN_CHANNEL: UpSafeCell<Option<GuildChannel>> =
+        unsafe { UpSafeCell::new(None) };
+}
 
 /// 音乐相关命令
 #[poise::command(
@@ -71,14 +79,13 @@ pub async fn search_bilibili(
             log::info!("获取到标题 {title} link {source_url}");
             (source_url, title)
         };
-        log::info!("获取到 {} 即将开始播放 {}", title, source_url);
         handler.stop();
+        let response = format!("开始播放 [{title}]({source_url})");
+        ctx.reply(response).await?;
+        
         let _ = handler.play_input(YoutubeDl::new(http_client, source_url.clone()).into());
 
         log::info!("开始播放 {}", title);
-        let response = format!("开始播放 [{title}]({source_url})");
-
-        ctx.reply(response).await?;
         return Ok(());
     }
 
@@ -97,7 +104,7 @@ async fn get_http_and_songbird(ctx: PoiseContext<'_>) -> crate::Result<(Client, 
     Ok((http_client, manager))
 }
 ///加入一个语音频道
-#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
+#[poise::command(slash_command, owners_only)]
 pub async fn join(
     ctx: PoiseContext<'_>,
     #[channel_types("Voice")] channel: GuildChannel,
@@ -123,17 +130,13 @@ pub async fn join(
 }
 
 pub struct TrackErrorNotifier;
-// /// 检查播放状态
-// pub(super) struct PlayEnd;
-// /// 检查播放状态
-// pub(super) struct PlayStart;
 
 #[async_trait]
 impl EventHandler for TrackErrorNotifier {
     async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
         if let EventContext::Track(track_list) = ctx {
             for (state, handle) in *track_list {
-                println!(
+                log::error!(
                     "Track {:?} encountered an error: {:?}",
                     handle.uuid(),
                     state.playing
@@ -145,7 +148,7 @@ impl EventHandler for TrackErrorNotifier {
     }
 }
 /// 离开一个语音频道
-#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
+#[poise::command(slash_command, owners_only)]
 pub async fn leave(
     ctx: PoiseContext<'_>,
     #[channel_types("Voice")] channel: GuildChannel,
@@ -175,7 +178,7 @@ pub async fn leave(
 }
 
 /// 停止播放当前音乐
-#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
+#[poise::command(slash_command)]
 pub async fn stop(ctx: PoiseContext<'_>) -> crate::Result<()> {
     let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let manager = songbird::get(ctx.serenity_context())
