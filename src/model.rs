@@ -110,6 +110,7 @@ impl AIConfig {
         message: &str,
         history: &[Message],
     ) -> crate::Result<String> {
+        // 插入时间戳消息提示
         let mut messages: VecDeque<AIMessage> = history.iter().map(into_ai_message).collect();
         messages.push_front(AIMessage::new(
             "system",

@@ -2,27 +2,29 @@
 //! 语音方向的内容
 
 use crate::cmd_system::utils::get_http_client;
-use crate::{Error, ExportVec, PoiseContext};
+use crate::{ExportVec, PoiseContext};
 use anyhow::Context;
 use poise::{CreateReply, async_trait};
+use reqwest::Client;
 use serenity::all::{GuildChannel, MessageBuilder};
 use songbird::input::YoutubeDl;
-use songbird::{Event, EventContext, EventHandler, TrackEvent};
+use songbird::{Event, EventContext, EventHandler, Songbird, TrackEvent};
+use std::sync::Arc;
+
+/// 音乐相关命令
+#[poise::command(slash_command, subcommands("play_music", "search_bilibili"))]
+pub async fn music(_ctx: PoiseContext<'_>) -> crate::Result<()> {
+    Ok(())
+}
 
 /// 播放音乐或视频，可播放网站以yt-dlp支持的网站为准
 #[poise::command(slash_command)]
 pub async fn play_music(
     ctx: PoiseContext<'_>,
     #[description = "播放链接，支持BiliBili，更多网站请参见yt-dlp开源项目的支持列表"] url: String,
-) -> Result<(), Error> {
-    let guild_id = ctx.guild_id().with_context(|| "没有在服务器中")?;
-    let http_client = get_http_client(&ctx).await?;
-    log::info!("http客户端获取成功");
-
-    let manager = songbird::get(ctx.serenity_context())
-        .await
-        .with_context(|| "获取语音客户端失败")?
-        .clone();
+) -> crate::Result<()> {
+    let guild_id = ctx.guild_id().context("没有在服务器中")?;
+    let (http_client, manager) = get_http_and_songbird(ctx).await?;
     log::info!("获取语音客户端成功");
     // 加入语音频道
     if let Some(handler_lock) = manager.get(guild_id) {
@@ -43,9 +45,59 @@ pub async fn play_music(
         ctx.reply(response).await?;
         return Ok(());
     }
-    Err(anyhow::anyhow!("出现异常，无法播放。"))
+    Err(anyhow::anyhow!("播放失败，可能没有加入语音频道"))
 }
 
+/// 从bilibili搜索音乐并播放第一个结果
+#[poise::command(slash_command, rename = "play_for_bilibili")]
+pub async fn search_bilibili(
+    ctx: PoiseContext<'_>,
+    #[description = "搜索内容"] search_key_word: String,
+) -> crate::Result<()> {
+    let guild_id = ctx.guild_id().context("没有在服务器中")?;
+    let (http_client, manager) = get_http_and_songbird(ctx).await?;
+    if let Some(handler_lock) = manager.get(guild_id) {
+        let mut handler = handler_lock.lock().await;
+        log::info!("获取语音频道成功，正在搜索内容");
+        let (source_url, title) = {
+            let search = format!(
+                "https://search.bilibili.com/all?keyword={}",
+                search_key_word
+            );
+            let mut src = YoutubeDl::new_search(http_client.clone(), search);
+            let mut src = src.search(Some(1)).await?;
+            let src = src.next().context("好像没有结果哦")?;
+            let source_url = src.source_url.context("获取链接失败")?;
+            let title = src.title.unwrap_or_default();
+            (source_url, title)
+        };
+        log::info!("获取到 {} 即将开始播放 {}", title, source_url);
+        let _ = handler.play_input(YoutubeDl::new(http_client, source_url.clone()).into());
+
+        log::info!("开始播放 {}",title);
+        let response = MessageBuilder::new()
+            .push_bold_safe(format!("开始播放 {}", title))
+            .push(source_url)
+            .build();
+
+        ctx.reply(response).await?;
+        return Ok(());
+    }
+
+    Err(anyhow::anyhow!("播放失败，可能没有加入语音频道"))
+}
+
+async fn get_http_and_songbird(ctx: PoiseContext<'_>) -> crate::Result<(Client, Arc<Songbird>)> {
+    let http_client = get_http_client(&ctx).await?;
+    log::info!("http客户端获取成功");
+
+    let manager = songbird::get(ctx.serenity_context())
+        .await
+        .with_context(|| "获取语音客户端失败")?
+        .clone();
+    log::info!("获取语音客户端成功");
+    Ok((http_client, manager))
+}
 ///加入一个语音频道
 #[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
 pub async fn join(
