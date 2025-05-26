@@ -37,7 +37,7 @@ pub async fn play(
         let src = YoutubeDl::new(http_client, url.clone());
 
         log::info!("获取YoutubeDl成功");
-
+        handler.stop();
         let _ = handler.play_input(src.clone().into());
 
         let response = MessageBuilder::new()
@@ -72,6 +72,7 @@ pub async fn search_bilibili(
             (source_url, title)
         };
         log::info!("获取到 {} 即将开始播放 {}", title, source_url);
+        handler.stop();
         let _ = handler.play_input(YoutubeDl::new(http_client, source_url.clone()).into());
 
         log::info!("开始播放 {}", title);
