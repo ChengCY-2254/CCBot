@@ -87,6 +87,7 @@ pub fn frame_work() -> poise::Framework<(), Error> {
     commands.append(&mut cmd_system::manage_export());
     commands.append(&mut cmd_system::general_export());
     commands.append(&mut cmd_system::music_export());
+    commands.append(&mut cmd_system::help_export());
     let mut owners =  HashSet::new();
     owners.insert(UserId::new(743352355264659548));
 

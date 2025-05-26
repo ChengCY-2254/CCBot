@@ -6,3 +6,5 @@ add_cmd_mod!(general);
 add_cmd_mod!(music);
 // 管理模块
 add_cmd_mod!(manage);
+// 帮助命令
+add_cmd_mod!(help);

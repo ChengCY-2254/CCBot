@@ -9,10 +9,11 @@ use lazy_static::lazy_static;
 use poise::CreateReply;
 use serenity::all::{ActivityData, GetMessages};
 use std::ops::Deref;
+use anyhow::anyhow;
 
 lazy_static! {
     /// UTC+8时区计算
-    pub static ref UTC8: FixedOffset = FixedOffset::east_opt(8 * 3600).unwrap();
+    static ref UTC8: FixedOffset = FixedOffset::east_opt(8 * 3600).unwrap();
 }
 
 #[poise::command(slash_command, prefix_command, context_menu_command = "用户信息")]
@@ -128,7 +129,14 @@ async fn clear(
         let response = create_ephemeral_reply("没有找到可删除的消息");
         ctx.send(response).await?;
     } else {
+        ctx.defer().await.map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
         for message in &messages {
+            // 如果是用户消息并且是私聊就跳过。
+            // 因为机器人无法删除私聊中的用户消息
+            #[allow(deprecated)]
+            if !message.author.bot&&message.is_private() { 
+                continue
+            }
             message.delete(ctx.serenity_context()).await?;
         }
         let response = create_ephemeral_reply(format!("已删除{}条消息", messages.len()));

@@ -13,10 +13,12 @@ pub type Data = UpSafeCell<DataInner>;
 pub type ExportVec = Vec<poise::Command<(), Error>>;
 
 lazy_static! {
-    pub static ref SYS_USER_PTOMPT_MESSAGE: AIMessage =
+     static ref SYS_USER_PTOMPT_MESSAGE: AIMessage =
         AIMessage::new("system", "以下是用户的最新输入");
+    /// 不使用@规则
+     static ref NO_AT_PROMPT_MESSAGE:AIMessage=AIMessage::new("system","这里是用户在对你私聊，可以不使用@");
     /// 在这里缓存住系统提示
-    pub static ref SYSTEM_PROMPT_CACHE: UpSafeCell<String> = unsafe {UpSafeCell::new(String::new())};
+     static ref SYSTEM_PROMPT_CACHE: UpSafeCell<String> = unsafe {UpSafeCell::new(String::new())};
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -106,6 +108,7 @@ impl AIConfig {
         http_client: &reqwest::Client,
         message: &str,
         history: &[Message],
+        is_private_chat: bool,
     ) -> crate::Result<String> {
         // 插入时间戳消息提示
         let mut messages: VecDeque<AIMessage> = history.iter().map(into_ai_message).collect();
@@ -113,6 +116,9 @@ impl AIConfig {
             "system",
             SYSTEM_PROMPT_CACHE.access().clone().as_str(),
         ));
+        if is_private_chat { 
+            messages.push_back(NO_AT_PROMPT_MESSAGE.clone());
+        }
         messages.push_back(SYS_USER_PTOMPT_MESSAGE.clone());
         messages.push_back(AIMessage::new("user", message));
         let response = http_client
