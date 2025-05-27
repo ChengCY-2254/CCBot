@@ -25,45 +25,11 @@ pub async fn music(_ctx: PoiseContext<'_>) -> crate::Result<()> {
     Ok(())
 }
 
-// /// 播放音乐或视频，可播放网站以yt-dlp支持的网站为准
-// #[poise::command(slash_command)]
-// pub async fn play(
-//     ctx: PoiseContext<'_>,
-//     #[description = "播放链接，支持BiliBili，更多网站请参见yt-dlp开源项目的支持列表"] url: String,
-// ) -> crate::Result<()> {
-//     let guild_id = ctx.guild_id().context("没有在服务器中")?;
-//     let (http_client, manager) = get_http_and_songbird(ctx).await?;
-//     log::info!("获取语音客户端成功");
-//     ctx.defer()
-//         .await
-//         .map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
-//     // 加入语音频道
-//     if let Some(handler_lock) = manager.get(guild_id) {
-//         let mut handler = handler_lock.lock().await;
-//
-//         log::info!("获取语音频道成功，即将开始推流");
-//         let src = YoutubeDl::new(http_client, url.clone());
-//
-//         log::info!("获取YoutubeDl成功");
-//         handler.stop();
-//         let _ = handler.play_input(src.clone().into());
-//
-//         let response = MessageBuilder::new()
-//             .push_bold_safe("开始播放")
-//             .push(&url)
-//             .build();
-//
-//         ctx.reply(response).await?;
-//         return Ok(());
-//     }
-//     Err(anyhow::anyhow!("播放失败，可能没有加入语音频道"))
-// }
-
 /// 播放音乐，支持列表请查看yt-dlp的支持网站。
 #[poise::command(slash_command, rename = "play")]
 pub async fn play(
     ctx: PoiseContext<'_>,
-    #[description = "[关键词|AV|BV]定位B站资源|直接链接"] text: String,
+    #[description = "[关键词|AV|BV]定位B站资源|直接链接]"] text: String,
 ) -> crate::Result<()> {
     let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let (http_client, manager) = get_http_and_songbird(ctx).await?;

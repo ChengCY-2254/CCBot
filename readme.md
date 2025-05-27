@@ -15,21 +15,21 @@
 
 - `/music join <channel>`:加入语音频道
 - `/music leave <channel>`:离开语音频道
-- `/music play_for_bilibili <keyword>`:从哔哩哔哩搜索并播放音频
-- `/music play <url>`:从url播放一首音乐，使用[yt-dlp](https://github.com/yt-dlp/yt-dlp)
+- `/music play <url>`:使用[yt-dlp](https://github.com/yt-dlp/yt-dlp)作为支持。`[关键词|AV|BV]定位B站资源|直接链接]`
 - `/stop`: 停止播放
 
 **通用命令**
 
 - `ping`: 查看用户创建时间
-- `set_status`:设置机器人状态
+- `status`:设置机器人状态
 - `clear <amount>`:清除<amount>聊天记录
-- `/switch_prompt <file_name>`:设置ai的系统提示词，提示词存放路径在`config/`下，扩展名为`.md`
+- `switch_prompt <file_name>`:设置ai的系统提示词，提示词存放路径在`config/`下，扩展名为`.md`
 
 **管理命令**
 
 - `/withdraw add <channel>`:将一个频道添加到撤回列表
 - `/withdraw remove <channel>`:将一个频道从撤回列表移除
+- `/withdraw list `:查看当前禁言列表
 
 对于`/music play`命令，支持Youtube和Bilibili的音频播放，理论上支持youtube，但由于yt-dlp的限制，可能会出现一些问题。
 
@@ -60,5 +60,8 @@ rust编译问题请参考rust给出的报错，安装对应的依赖包即可。
 - [ ] 原神，启动！2025/05/24
 - [ ] 设置某个频道为欢迎频道。
 - [x] 未添加到语音频道的时候使用播放音乐给出正确的错误提示。
-- [ ] 如果是dm频道，那么就只需要删除自己的消息即可。
-- [x] 为/switch_prompt 添加仅管理员可用，而不是只能在频道中使用。
+- [x] 如果是dm频道，那么就只需要删除自己的消息即可。
+- [x] 为/switch_prompt 添加仅管理员可用，而不是只能在频道中使用。,
+- [x] /music play_for_bilibili [keyword]参数支持AV&BV号，这个需要在注释中给出。,
+- [x] 私聊不用@,
+- [x] 合并两个音乐播放命令，如果是HTTP开头，就使用new，如果是文本，那就默认去哔哩哔哩搜索。
