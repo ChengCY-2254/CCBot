@@ -8,8 +8,8 @@ use anyhow::{Context, anyhow};
 use lazy_static::lazy_static;
 use poise::{CreateReply, async_trait};
 use reqwest::Client;
-use serenity::all::{EditChannel, GuildChannel, MessageBuilder};
-use songbird::input::YoutubeDl;
+use serenity::all::{EditChannel, GuildChannel};
+use songbird::input::{Compose, YoutubeDl};
 use songbird::{Event, EventContext, EventHandler, Songbird, TrackEvent};
 use std::sync::Arc;
 
@@ -20,53 +20,50 @@ lazy_static! {
 }
 
 /// 音乐相关命令
-#[poise::command(
-    slash_command,
-    subcommands("play_bilibili", "play", "join", "leave", "stop")
-)]
+#[poise::command(slash_command, subcommands("play", "join", "leave", "stop"))]
 pub async fn music(_ctx: PoiseContext<'_>) -> crate::Result<()> {
     Ok(())
 }
 
-/// 播放音乐或视频，可播放网站以yt-dlp支持的网站为准
-#[poise::command(slash_command)]
+// /// 播放音乐或视频，可播放网站以yt-dlp支持的网站为准
+// #[poise::command(slash_command)]
+// pub async fn play(
+//     ctx: PoiseContext<'_>,
+//     #[description = "播放链接，支持BiliBili，更多网站请参见yt-dlp开源项目的支持列表"] url: String,
+// ) -> crate::Result<()> {
+//     let guild_id = ctx.guild_id().context("没有在服务器中")?;
+//     let (http_client, manager) = get_http_and_songbird(ctx).await?;
+//     log::info!("获取语音客户端成功");
+//     ctx.defer()
+//         .await
+//         .map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
+//     // 加入语音频道
+//     if let Some(handler_lock) = manager.get(guild_id) {
+//         let mut handler = handler_lock.lock().await;
+//
+//         log::info!("获取语音频道成功，即将开始推流");
+//         let src = YoutubeDl::new(http_client, url.clone());
+//
+//         log::info!("获取YoutubeDl成功");
+//         handler.stop();
+//         let _ = handler.play_input(src.clone().into());
+//
+//         let response = MessageBuilder::new()
+//             .push_bold_safe("开始播放")
+//             .push(&url)
+//             .build();
+//
+//         ctx.reply(response).await?;
+//         return Ok(());
+//     }
+//     Err(anyhow::anyhow!("播放失败，可能没有加入语音频道"))
+// }
+
+/// 播放音乐，支持列表请查看yt-dlp的支持网站。
+#[poise::command(slash_command, rename = "play")]
 pub async fn play(
     ctx: PoiseContext<'_>,
-    #[description = "播放链接，支持BiliBili，更多网站请参见yt-dlp开源项目的支持列表"] url: String,
-) -> crate::Result<()> {
-    let guild_id = ctx.guild_id().context("没有在服务器中")?;
-    let (http_client, manager) = get_http_and_songbird(ctx).await?;
-    log::info!("获取语音客户端成功");
-    ctx.defer()
-        .await
-        .map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
-    // 加入语音频道
-    if let Some(handler_lock) = manager.get(guild_id) {
-        let mut handler = handler_lock.lock().await;
-
-        log::info!("获取语音频道成功，即将开始推流");
-        let src = YoutubeDl::new(http_client, url.clone());
-
-        log::info!("获取YoutubeDl成功");
-        handler.stop();
-        let _ = handler.play_input(src.clone().into());
-
-        let response = MessageBuilder::new()
-            .push_bold_safe("开始播放")
-            .push(&url)
-            .build();
-
-        ctx.reply(response).await?;
-        return Ok(());
-    }
-    Err(anyhow::anyhow!("播放失败，可能没有加入语音频道"))
-}
-
-/// 从bilibili搜索音乐并播放第一个结果
-#[poise::command(slash_command, rename = "play_for_bilibili")]
-pub async fn play_bilibili(
-    ctx: PoiseContext<'_>,
-    #[description = "搜索内容"] key_word: String,
+    #[description = "[关键词|AV|BV]定位B站资源|直接链接"] text: String,
 ) -> crate::Result<()> {
     let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let (http_client, manager) = get_http_and_songbird(ctx).await?;
@@ -78,12 +75,20 @@ pub async fn play_bilibili(
     if let Some(handler_lock) = manager.get(guild_id) {
         let mut handler = handler_lock.lock().await;
         log::info!("获取语音频道成功，正在搜索内容");
-        let (source_url, title) = {
-            let mut src = YoutubeDl::new_search(http_client.clone(), key_word);
+        let (source_url, title) = if text.starts_with("https://") {
+            let data = YoutubeDl::new(http_client.clone(), text)
+                .aux_metadata()
+                .await?;
+            let source_url = data.source_url.unwrap_or("获取链接失败".into());
+            let title = data.title.unwrap_or("原神".into());
+            log::info!("获取到标题 {title} link {source_url}");
+            (source_url, title)
+        } else {
+            let mut src = YoutubeDl::new_search(http_client.clone(), text);
             let mut src = src.search(Some("bilisearch"), Some(5)).await?;
             let src = src.next().context("好像没有结果哦")?;
-            let source_url = src.source_url.context("获取链接失败")?;
-            let title = src.title.unwrap_or_default();
+            let source_url = src.source_url.unwrap_or("获取链接失败".into());
+            let title = src.title.unwrap_or("原神".into());
             log::info!("获取到标题 {title} link {source_url}");
             (source_url, title)
         };
