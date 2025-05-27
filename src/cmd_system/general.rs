@@ -128,7 +128,7 @@ async fn clear(
         ctx.send(response).await?;
         return Ok(())
     } else {
-        ctx.defer()
+        ctx.defer_ephemeral()
             .await
             .map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
         let mut delete_count = 0u16;

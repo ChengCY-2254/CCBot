@@ -8,9 +8,12 @@ use std::path::{Path, PathBuf};
 
 /// 机器人需要保存的配置
 pub type Data = UpSafeCell<DataInner>;
-
 /// [crate::macros::add_sub_mod]所使用的导出类型
 pub type ExportVec = Vec<poise::Command<(), Error>>;
+///错误类型
+pub type Error = anyhow::Error;
+///上下文类型
+pub type PoiseContext<'a> = poise::Context<'a, (), Error>;
 
 lazy_static! {
      static ref SYS_USER_PTOMPT_MESSAGE: AIMessage =
@@ -36,10 +39,7 @@ pub struct DataInner {
     /// ai配置
     pub aiconfig: AIConfig,
 }
-///错误类型
-pub type Error = anyhow::Error;
-///上下文类型
-pub type PoiseContext<'a> = poise::Context<'a, (), Error>;
+
 
 impl DataInner {
     /// 添加一个需要监控的频道

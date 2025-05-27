@@ -8,7 +8,7 @@ use anyhow::{Context, anyhow};
 use lazy_static::lazy_static;
 use poise::{CreateReply, async_trait};
 use reqwest::Client;
-use serenity::all::{GuildChannel, MessageBuilder};
+use serenity::all::{EditChannel, GuildChannel, MessageBuilder};
 use songbird::input::YoutubeDl;
 use songbird::{Event, EventContext, EventHandler, Songbird, TrackEvent};
 use std::sync::Arc;
@@ -37,7 +37,9 @@ pub async fn play(
     let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let (http_client, manager) = get_http_and_songbird(ctx).await?;
     log::info!("获取语音客户端成功");
-    ctx.defer().await.map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
+    ctx.defer()
+        .await
+        .map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
     // 加入语音频道
     if let Some(handler_lock) = manager.get(guild_id) {
         let mut handler = handler_lock.lock().await;
@@ -68,15 +70,11 @@ pub async fn search_bilibili(
 ) -> crate::Result<()> {
     let guild_id = ctx.guild_id().context("没有在服务器中")?;
     let (http_client, manager) = get_http_and_songbird(ctx).await?;
-    //1. 为什么会发生 Unknown interaction？
-    // 
-    // (1) 未在 3 秒内响应 (HTTP 200)
-    // 
-    // Discord 要求 必须在 3 秒内对交互请求返回初始响应（ACK 或实际回复），否则会标记为 Unknown interaction。
-    // 解决方案：
-    // 使用 deferReply（如果是长时间操作，先返回“机器人正在处理”）。
-    // 如果无法在 3 秒内完成，先返回 ACK（type: 5 或 defer: true），再用 followUp 发送最终结果。
-    ctx.defer().await.map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
+
+    ctx.defer()
+        .await
+        .map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
+    
     if let Some(handler_lock) = manager.get(guild_id) {
         let mut handler = handler_lock.lock().await;
         log::info!("获取语音频道成功，正在搜索内容");
@@ -95,19 +93,19 @@ pub async fn search_bilibili(
         log::info!("开始播放 {}", title);
         log::info!("开始响应信息");
         let response = format!("开始播放 [{title}]({source_url})");
-        // let reply = async || ctx.reply(response).await;
-        // loop {
-        //     match reply.clone()().await {
-        //         Ok(_) => {
-        //             log::info!("响应完成");
-        //             break;
-        //         }
-        //         Err(why) => {
-        //             log::error!("响应时发生错误 {}", why);
-        //             continue
-        //         }
-        //     }
-        // }
+        //因为这里前面已经加入了频道，所以一定不会空
+        let mut voice_channel = CURRENT_JOIN_CHANNEL
+            .access()
+            .clone()
+            .context("更新语音频道状态失败，可能没有加入语音频道")?;
+        voice_channel
+            .edit(
+                ctx,
+                EditChannel::new().status(format!("正在播放 [{title}]")),
+            )
+            .await
+            .map_err(|why| anyhow!("编辑语音状态时发生错误 {why}"))?;
+
         ctx.reply(response)
             .await
             .map_err(|why| anyhow!("响应时发生错误 {why}"))?;
@@ -145,6 +143,12 @@ pub async fn join(
         .with_context(|| "语音客户端初始化中")?
         .clone();
     let handler_lock = manager.join(guild_id, channel_id).await?;
+    {
+        let mut current_join_channel = CURRENT_JOIN_CHANNEL.exclusive_access();
+        if current_join_channel.is_none() {
+            let _ = current_join_channel.replace(channel.clone());
+        }
+    }
     let mut handler = handler_lock.lock().await;
     handler.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier);
     let reply = CreateReply::default()
@@ -154,7 +158,7 @@ pub async fn join(
     Ok(())
 }
 
-pub struct TrackErrorNotifier;
+struct TrackErrorNotifier;
 
 #[async_trait]
 impl EventHandler for TrackErrorNotifier {
@@ -192,6 +196,13 @@ pub async fn leave(
             ctx.say("离开语音频道失败").await?;
             return Err(anyhow::anyhow!("离开语音频道失败"));
         };
+        {
+            // 离开了频道，所以可以丢弃值
+            let mut current_join_channel = CURRENT_JOIN_CHANNEL.exclusive_access();
+            if current_join_channel.is_some() {
+                let _ = current_join_channel.take();
+            }
+        }
     }
     ctx.send(
         CreateReply::default()
