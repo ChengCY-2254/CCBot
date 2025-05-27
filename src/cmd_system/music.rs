@@ -15,14 +15,14 @@ use std::sync::Arc;
 
 lazy_static! {
     /// 当前加入的语音频道id
-    pub static ref CURRENT_JOIN_CHANNEL: UpSafeCell<Option<GuildChannel>> =
+     static ref CURRENT_JOIN_CHANNEL: UpSafeCell<Option<GuildChannel>> =
         unsafe { UpSafeCell::new(None) };
 }
 
 /// 音乐相关命令
 #[poise::command(
     slash_command,
-    subcommands("search_bilibili", "play", "join", "leave", "stop")
+    subcommands("play_bilibili", "play", "join", "leave", "stop")
 )]
 pub async fn music(_ctx: PoiseContext<'_>) -> crate::Result<()> {
     Ok(())
@@ -64,7 +64,7 @@ pub async fn play(
 
 /// 从bilibili搜索音乐并播放第一个结果
 #[poise::command(slash_command, rename = "play_for_bilibili")]
-pub async fn search_bilibili(
+pub async fn play_bilibili(
     ctx: PoiseContext<'_>,
     #[description = "搜索内容"] key_word: String,
 ) -> crate::Result<()> {
@@ -74,7 +74,7 @@ pub async fn search_bilibili(
     ctx.defer()
         .await
         .map_err(|why| anyhow!("延迟响应时发生错误 {why}"))?;
-    
+
     if let Some(handler_lock) = manager.get(guild_id) {
         let mut handler = handler_lock.lock().await;
         log::info!("获取语音频道成功，正在搜索内容");
@@ -93,6 +93,20 @@ pub async fn search_bilibili(
         log::info!("开始播放 {}", title);
         log::info!("开始响应信息");
         let response = format!("开始播放 [{title}]({source_url})");
+        // 更新频道状态
+        update_channel_state(ctx, &title).await?;
+
+        ctx.reply(response)
+            .await
+            .map_err(|why| anyhow!("响应时发生错误 {why}"))?;
+        return Ok(());
+    }
+
+    Err(anyhow::anyhow!("播放失败，可能没有加入语音频道"))
+}
+
+async fn update_channel_state(ctx: PoiseContext<'_>, title: &str) -> crate::Result<()> {
+    {
         //因为这里前面已经加入了频道，所以一定不会空
         let mut voice_channel = CURRENT_JOIN_CHANNEL
             .access()
@@ -105,14 +119,8 @@ pub async fn search_bilibili(
             )
             .await
             .map_err(|why| anyhow!("编辑语音状态时发生错误 {why}"))?;
-
-        ctx.reply(response)
-            .await
-            .map_err(|why| anyhow!("响应时发生错误 {why}"))?;
-        return Ok(());
-    }
-
-    Err(anyhow::anyhow!("播放失败，可能没有加入语音频道"))
+    };
+    Ok(())
 }
 
 async fn get_http_and_songbird(ctx: PoiseContext<'_>) -> crate::Result<(Client, Arc<Songbird>)> {
@@ -151,6 +159,7 @@ pub async fn join(
     }
     let mut handler = handler_lock.lock().await;
     handler.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier);
+    // handler.add_global_event(Event::Track(TrackEvent::End))
     let reply = CreateReply::default()
         .ephemeral(true)
         .content(format!("已加入语音频道: {}", channel.name));
@@ -158,24 +167,6 @@ pub async fn join(
     Ok(())
 }
 
-struct TrackErrorNotifier;
-
-#[async_trait]
-impl EventHandler for TrackErrorNotifier {
-    async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
-        if let EventContext::Track(track_list) = ctx {
-            for (state, handle) in *track_list {
-                log::error!(
-                    "Track {:?} encountered an error: {:?}",
-                    handle.uuid(),
-                    state.playing
-                );
-            }
-        }
-
-        None
-    }
-}
 /// 离开一个语音频道
 #[poise::command(slash_command, owners_only)]
 pub async fn leave(
@@ -196,6 +187,8 @@ pub async fn leave(
             ctx.say("离开语音频道失败").await?;
             return Err(anyhow::anyhow!("离开语音频道失败"));
         };
+        // 暂停播放就重置状态
+        update_channel_state(ctx, "").await?;
         {
             // 离开了频道，所以可以丢弃值
             let mut current_join_channel = CURRENT_JOIN_CHANNEL.exclusive_access();
@@ -222,7 +215,7 @@ pub async fn stop(ctx: PoiseContext<'_>) -> crate::Result<()> {
         .with_context(|| "语音客户端初始化中")?
         .clone();
 
-    let cell = manager.get(guild_id).with_context(|| "找不到对应的频道")?;
+    let cell = manager.get(guild_id).context("找不到对应的频道")?;
     {
         let mut handler = cell.lock().await;
         handler.stop();
@@ -231,6 +224,25 @@ pub async fn stop(ctx: PoiseContext<'_>) -> crate::Result<()> {
     }
 
     Ok(())
+}
+
+struct TrackErrorNotifier;
+
+#[async_trait]
+impl EventHandler for TrackErrorNotifier {
+    async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
+        if let EventContext::Track(track_list) = ctx {
+            for (state, handle) in *track_list {
+                log::error!(
+                    "Track {:?} encountered an error: {:?}",
+                    handle.uuid(),
+                    state.playing
+                );
+            }
+        }
+
+        None
+    }
 }
 
 pub fn music_export() -> ExportVec {
