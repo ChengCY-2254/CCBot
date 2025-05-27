@@ -16,6 +16,6 @@
          "response_format": {
            "type": "text"
          },
-         "system_prompt_file":""
+         "system_prompt_file":"src/奶盖波波糖.md"
        }
 }

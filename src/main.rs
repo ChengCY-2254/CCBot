@@ -1,6 +1,6 @@
 use anyhow::anyhow;
-use tracing::instrument;
 use cc_bot::utils::{check_config_dir_exists, handle_file_if_not_dir};
+use tracing::instrument;
 
 #[instrument]
 fn main() -> cc_bot::Result<()> {
@@ -31,6 +31,7 @@ fn main() -> cc_bot::Result<()> {
 fn pre_check() -> cc_bot::Result<()> {
     const EXAMPLE_ENV: &str = include_str!("../.env.example");
     const DATA_CONFIG: &str = include_str!("../data.json.example");
+    const AI_CONFIG: &str = include_str!("../奶盖波波糖.md");
 
     if let Err(_no_why) = check_config_dir_exists() {
         std::fs::create_dir_all("config")?;
@@ -43,6 +44,11 @@ fn pre_check() -> cc_bot::Result<()> {
 
         handle_file_if_not_dir("config/data.json", || {
             std::fs::write("config/data.json", DATA_CONFIG).expect("Failed to write data.json");
+            log::info!("Create config/data.json file");
+        });
+
+        handle_file_if_not_dir("config/奶盖波波糖.md", || {
+            std::fs::write("config/data.json", AI_CONFIG).expect("Failed to write data.json");
             log::info!("Create config/data.json file");
         });
 
