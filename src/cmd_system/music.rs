@@ -41,7 +41,7 @@ pub async fn play(
     if let Some(handler_lock) = manager.get(guild_id) {
         let mut handler = handler_lock.lock().await;
         log::info!("获取语音频道成功，正在搜索内容");
-        let (source_url, title) = if text.starts_with("https://") {
+        let (source_url, title) = if text.starts_with("https://")|| text.starts_with("http://") {
             let data = YoutubeDl::new(http_client.clone(), text)
                 .aux_metadata()
                 .await?;
