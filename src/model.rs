@@ -2,7 +2,7 @@ use crate::{UpSafeCell, read_file};
 use anyhow::anyhow;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use serenity::all::{ChannelId, Message};
+use serenity::all::{ChannelId, Message, UserId};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 
@@ -38,6 +38,8 @@ pub struct DataInner {
     pub monitored_channels: HashSet<ChannelId>,
     /// ai配置
     pub aiconfig: AIConfig,
+    /// 所有的owner
+    pub owners:HashSet<UserId>
 }
 
 
@@ -94,6 +96,7 @@ pub struct AIConfig {
 }
 
 impl AIConfig {
+    /// 初始化系统提示
     pub fn init_prompt(&mut self) -> crate::Result<()> {
         if let Some(file) = self.system_prompt_file.file_name() {
             let file = file.to_str().unwrap().to_string();

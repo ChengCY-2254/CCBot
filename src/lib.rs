@@ -19,10 +19,10 @@ use crate::keys::HttpKey;
 pub use anyhow::Error;
 pub use anyhow::Result;
 use model::*;
+use serenity::all::UserId;
 use serenity::prelude::*;
 use songbird::SerenityInit;
 use std::collections::HashSet;
-use serenity::all::UserId;
 use utils::*;
 /// 版本信息
 pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
@@ -43,7 +43,7 @@ pub async fn run(token: String) -> Result<()> {
         // 直接消息
         GatewayIntents::DIRECT_MESSAGES;
     let http_client = reqwest::Client::new();
-    let data = unsafe {
+    let data: Data = unsafe {
         let mut data = DataInner::new("config/data.json").map_err(|e| {
             log::error!("Error loading data: {:?}", e);
             anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
@@ -53,7 +53,9 @@ pub async fn run(token: String) -> Result<()> {
         data.aiconfig.init_prompt()?;
         UpSafeCell::new(data)
     };
-
+    // 初始化命令框架
+    let frame_work = { frame_work(data.access().owners.clone()) };
+    
     let mut client = {
         #[allow(unused_mut)]
         let mut client = Client::builder(token, gateway)
@@ -62,7 +64,7 @@ pub async fn run(token: String) -> Result<()> {
             .event_handler(hub_system::ManagerHandler)
             .event_handler(hub_system::AiHandler)
             .event_handler(hub_system::StartHandler)
-            .framework(frame_work())
+            .framework(frame_work)
             .type_map_insert::<HttpKey>(http_client)
             .type_map_insert::<BotDataKey>(data);
 
@@ -77,7 +79,7 @@ pub async fn run(token: String) -> Result<()> {
 }
 
 /// 命令行框架程序
-pub fn frame_work() -> poise::Framework<(), Error> {
+pub fn frame_work(owners: HashSet<UserId>) -> poise::Framework<(), Error> {
     use crate::cmd_system;
     // 配置文件要在这里读取
     log::info!("create framework");
@@ -87,8 +89,6 @@ pub fn frame_work() -> poise::Framework<(), Error> {
     commands.append(&mut cmd_system::general_export());
     commands.append(&mut cmd_system::music_export());
     commands.append(&mut cmd_system::help_export());
-    let mut owners =  HashSet::new();
-    owners.insert(UserId::new(743352355264659548));
 
     let framework: poise::Framework<(), Error> = poise::Framework::builder()
         .setup(|ctx, _ready, framework| {
