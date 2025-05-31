@@ -1,10 +1,10 @@
 //! 该模块中的命令使用poise与songbird构建
 mod utils;
 // 通用模块
-add_cmd_mod!(general);
+create_command_module!(general);
 // 音乐模块
-add_cmd_mod!(music);
+create_command_module!(music);
 // 管理模块
-add_cmd_mod!(manage);
+create_command_module!(manage);
 // 帮助命令
-add_cmd_mod!(help);
+create_command_module!(help);

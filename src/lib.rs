@@ -55,12 +55,12 @@ pub async fn run(token: String) -> Result<()> {
     };
     // 初始化命令框架
     let frame_work = { frame_work(data.access().owners.clone()) };
-    
+
     let mut client = {
         #[allow(unused_mut)]
         let mut client = Client::builder(token, gateway)
             .register_songbird()
-            .event_handler(hub_system::GuildMessageHandler)
+            // .event_handler(hub_system::GuildMessageHandler)
             .event_handler(hub_system::ManagerHandler)
             .event_handler(hub_system::AiHandler)
             .event_handler(hub_system::StartHandler)

@@ -2,34 +2,44 @@
 name = "cc-bot"
 version = "0.1.0"
 edition = "2024"
+authors = ["Cheng"]
 repository = "https://github.com/ChengCY-2254/CCBot.git"
 [dependencies]
+
+# 错误处理
 anyhow = "1.0.98"
+# 时间管理
 chrono = "0.4.41"
+# .env文件加载
 dotenv = "0.15.0"
+# 异步使用
 futures = "0.3.31"
+# 异步运行
 tokio = { version = "1.45.0", features = ["rt-multi-thread"] }
+# 日志库门面
 log = "0.4.27"
+# 日志
+tracing = "0.1.41"
+# 日志订阅
+tracing-subscriber = { version = "0.3.19", features = ["local-time", "fmt"] }
+# 请求发送
 reqwest = { version = "0.12.15", features = ["json"] }
+# 序列化框架
 serde = "1.0.219"
 serde_json = "1.0.140"
+# 机器人命令框架
 poise = "0.6.1"
+# 机器人主服务框架
 serenity = { version = "0.12.4", features = ["builder", "collector", "client", "framework", "http", "model", "utils", "voice", "chrono", "cache"] }
 #songbird = "0.5.0"
+# 音频播放框架
 songbird = { git = "https://github.com/ChengCY-2254/songbird" }
-#sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "sqlite", "macros"] }
-#sea-orm = "1.1.11"
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["local-time", "fmt"] }
+
 # macro使用
 lazy_static = "1.5.0"
 paste = "1.0.15"
-#proc-macro-workshop = { git = "https://github.com/ChengCY-2254/proc-macro-workshop.git" }
 
+# 编解码器，不可移除
 [dependencies.symphonia]
 version = "0.5"
 features = ["all"]
-
-[features]
-# 留着之后用，毕竟我讨厌sql。
-db = []

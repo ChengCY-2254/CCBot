@@ -1,15 +1,16 @@
 use crate::{UpSafeCell, read_file};
 use anyhow::anyhow;
 use lazy_static::lazy_static;
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
-use serenity::all::{ChannelId, Message, UserId};
+use serenity::all::{ActivityType, ChannelId, Message, UserId};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 
 /// 机器人需要保存的配置
 pub type Data = UpSafeCell<DataInner>;
 /// [crate::macros::add_sub_mod]所使用的导出类型
-pub type ExportVec = Vec<poise::Command<(), Error>>;
+pub type CommandVec = Vec<poise::Command<(), Error>>;
 ///错误类型
 pub type Error = anyhow::Error;
 ///上下文类型
@@ -24,7 +25,7 @@ lazy_static! {
      static ref SYSTEM_PROMPT_CACHE: UpSafeCell<String> = unsafe {UpSafeCell::new(String::new())};
 }
 
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug)]
 #[serde(deny_unknown_fields)]
 /// 用户数据
 /// md又多了一个配置文件，这个还要反复读写
@@ -39,9 +40,10 @@ pub struct DataInner {
     /// ai配置
     pub aiconfig: AIConfig,
     /// 所有的owner
-    pub owners:HashSet<UserId>
+    pub owners: HashSet<UserId>,
+    /// 机器人的活动
+    pub bot_activity: ActivityData,
 }
-
 
 impl DataInner {
     /// 添加一个需要监控的频道
@@ -56,7 +58,7 @@ impl DataInner {
 
 impl DataInner {
     /// 给定一个路径，读取数据文件并返回数据
-    pub fn new(path: impl AsRef<Path>) -> crate::Result<DataInner> {
+    pub fn new(path: impl AsRef<Path> + std::fmt::Debug) -> crate::Result<DataInner> {
         read_file(path)
     }
     /// 保存数据文件
@@ -119,7 +121,7 @@ impl AIConfig {
             "system",
             SYSTEM_PROMPT_CACHE.access().clone().as_str(),
         ));
-        if is_private_chat { 
+        if is_private_chat {
             messages.push_back(NO_AT_PROMPT_MESSAGE.clone());
         }
         messages.push_back(SYS_USER_PTOMPT_MESSAGE.clone());
@@ -195,6 +197,26 @@ impl AIMessage {
         AIMessage {
             role: role.into(),
             content: content.into(),
+        }
+    }
+}
+
+/// 从[serenity::gateway::ActivityData]中拷贝，因为它没实现反序列化，所以创建一个。
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct ActivityData {
+    pub name: String,
+    pub kind: ActivityType,
+    pub state: Option<String>,
+    pub url: Option<Url>,
+}
+
+impl From<ActivityData> for serenity::gateway::ActivityData {
+    fn from(value: ActivityData) -> Self {
+        serenity::gateway::ActivityData {
+            name: value.name,
+            kind: value.kind,
+            state: value.state,
+            url: value.url,
         }
     }
 }

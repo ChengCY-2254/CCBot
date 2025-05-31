@@ -1,6 +1,6 @@
 //! 这个模块用于展示帮助信息
 
-use crate::model::{ExportVec, PoiseContext};
+use crate::model::{CommandVec, PoiseContext};
 use crate::utils::create_ephemeral_reply;
 
 #[poise::command(slash_command)]
@@ -10,6 +10,6 @@ pub async fn help(ctx: PoiseContext<'_>) -> crate::Result<()> {
     Ok(())
 }
 
-pub fn help_export() -> ExportVec {
+pub fn help_export() -> CommandVec {
     vec![help()]
 }
