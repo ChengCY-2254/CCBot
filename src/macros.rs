@@ -6,7 +6,7 @@
 ///     vec![add()]
 /// }
 /// ```
-macro_rules! add_cmd_mod {
+macro_rules! create_command_module {
     ($mod_name:ident) => {
         mod $mod_name;
         paste::paste!{
@@ -18,12 +18,12 @@ macro_rules! add_cmd_mod {
 /// ```ignore
 /// add_handler_mod(manager)
 /// ```
-/// 将会生成
+/// 将会导入该模块中的handler
 /// ```ignore
 /// mod manager;
 /// pub use manager::ManagerHandler;
 /// ```
-macro_rules! add_handler_mod {
+macro_rules! create_handler_module {
     ($mod_name:ident) => {
         mod $mod_name;
         paste::paste!{

@@ -2,32 +2,41 @@
 //! This file contains the implementation of the HubSystem struct and its associated methods.
 //! `[#poise::command]`中的`#[channel_types]`对应路径为[serenity::model::channel::ChannelType] Enum
 
-use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
+use crate::utils::with_time_to_utc8;
+use crate::{CommandVec, PoiseContext, create_ephemeral_reply};
 use anyhow::anyhow;
 use chrono::FixedOffset;
 use futures::{Stream, StreamExt};
 use lazy_static::lazy_static;
 use poise::CreateReply;
 use serenity::all::{ActivityData, GetMessages};
-use std::ops::Deref;
+use tracing::instrument;
 
 lazy_static! {
     /// UTC+8时区计算
     static ref UTC8: FixedOffset = FixedOffset::east_opt(8 * 3600).unwrap();
 }
 
-#[poise::command(slash_command, prefix_command, context_menu_command = "用户信息")]
+#[poise::command(slash_command, prefix_command)]
+#[instrument]
 /// 获取并检查用户信息
 async fn ping(
     ctx: PoiseContext<'_>,
-    #[description = "选择一个用户"] user: poise::serenity_prelude::User,
+    #[description = "选择一个用户"] user: Option<poise::serenity_prelude::User>,
 ) -> crate::Result<()> {
-    let user_create_time = user
-        .created_at()
-        .to_utc()
-        .with_timezone(UTC8.deref())
-        .format("%Y-%m-%d %H:%M:%S")
-        .to_string();
+    if user.is_none() {
+        let response = create_ephemeral_reply("请选择一个用户");
+        ctx.send(response).await?;
+        return Ok(());
+    }
+    let user = user.unwrap();
+    
+    let user_create_time = {
+        let time = user.created_at().to_utc();
+        with_time_to_utc8(time)
+            .format("%Y-%m-%d %H:%M:%S")
+            .to_string()
+    };
     let content = format!(
         "<@{}> 用户id为 `{}` 创建于 {}",
         user.id, user.id, user_create_time
@@ -54,6 +63,7 @@ async fn register(ctx: PoiseContext<'_>) -> crate::Result<()> {
     default_member_permissions = "ADMINISTRATOR",
     owners_only
 )]
+#[instrument]
 async fn set_status(
     ctx: PoiseContext<'_>,
     #[autocomplete = "autocomplete_activity_type"]
@@ -101,7 +111,7 @@ async fn autocomplete_activity_type(
     _ctx: PoiseContext<'_>,
     partial: &str,
 ) -> impl Stream<Item = String> {
-    futures::stream::iter(&["playing", "listening", "streaming", "watching", "custom"])
+    futures::stream::iter(["playing", "listening", "streaming", "watching", "custom"])
         .filter(move |name| futures::future::ready(name.starts_with(partial)))
         .map(|name| name.to_string())
 }
@@ -126,7 +136,7 @@ async fn clear(
     if messages.is_empty() {
         let response = create_ephemeral_reply("没有找到可删除的消息");
         ctx.send(response).await?;
-        return Ok(())
+        return Ok(());
     } else {
         ctx.defer_ephemeral()
             .await
@@ -140,7 +150,7 @@ async fn clear(
                 continue;
             } else {
                 message.delete(ctx.serenity_context()).await?;
-                delete_count+=1;
+                delete_count += 1;
             }
         }
         let response = create_ephemeral_reply(format!("已删除{}条消息", delete_count));
@@ -149,6 +159,7 @@ async fn clear(
     Ok(())
 }
 
-pub fn general_export() -> ExportVec {
+/// 导出命令
+pub fn general_export() -> CommandVec {
     vec![ping(), register(), set_status(), clear()]
 }

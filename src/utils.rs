@@ -1,16 +1,28 @@
 //! 这里存放系统的一些工具函数
 
 use anyhow::Context;
+use chrono::{DateTime, FixedOffset, Utc};
+use lazy_static::lazy_static;
 use poise::CreateReply;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::cell::{RefCell, RefMut};
+use std::fs::File;
 use std::io::BufReader;
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
+use tracing::instrument;
 
+lazy_static! {
+    static ref UTC8: FixedOffset = FixedOffset::east_opt(8 * 3600).unwrap();
+}
+
+/// 格式化时间为UTC8
+pub fn with_time_to_utc8(time: DateTime<Utc>) -> DateTime<FixedOffset> {
+    time.with_timezone(UTC8.deref())
+}
 #[inline]
 /// 创建一个新的 Tokio 运行时
 pub fn runtime() -> Runtime {
@@ -18,11 +30,11 @@ pub fn runtime() -> Runtime {
 }
 
 /// 读取配置文件并反序列化为指定类型
-pub fn read_file<P: AsRef<std::path::Path>, T: DeserializeOwned>(path: P) -> crate::Result<T> {
+#[instrument]
+pub fn read_file<P: AsRef<std::path::Path> + std::fmt::Debug, T: DeserializeOwned>(path: P) -> crate::Result<T> {
     let path = path.as_ref();
-    let file = std::fs::File::open(path)
-        .context(format!("Unable to open {:?}", path))
-        .expect("Unable to open config file");
+    let file = File::open(path)
+        .context(format!("Unable to open {:?}", path))?;
     let reader = BufReader::new(file);
     let data = serde_json::from_reader(reader)?;
     Ok(data)
@@ -50,19 +62,19 @@ pub fn check_config_dir_exists() -> crate::Result<()> {
 }
 
 /// 检查给定文件是否存在，如果不存在，则尝试创建它并调用给定函数对其写入
-pub fn handle_file_if_not_dir<F>(path: impl AsRef<std::path::Path>, f: F)
+pub fn create_file_and_process_if_missing<F>(path: impl AsRef<std::path::Path>, processor: F) -> crate::Result<()>
 where
-    F: FnOnce(),
+    F: FnOnce(File) -> crate::Result<()>,
 {
     let path = path.as_ref();
     #[allow(clippy::needless_return)]
     if path.exists() {
-        return;
+        return Ok(());
     } else {
-        std::fs::File::create(path)
-            .map_err(|why| format!("Unable to open {:?}, because: {}", path, why))
+        let file = File::create(path)
+            .map_err(|why| format!("Unable to create {:?}, because: {}", path, why))
             .unwrap();
-        f()
+        processor(file)
     }
 }
 

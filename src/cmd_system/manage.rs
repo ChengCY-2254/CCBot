@@ -7,7 +7,7 @@
 //! todo 创建一个叫up的命令，将配置文件传到config目录下，用法为 up filename:xyz.md content:……
 
 use crate::keys::BotDataKey;
-use crate::{ExportVec, PoiseContext, create_ephemeral_reply};
+use crate::{CommandVec, PoiseContext, create_ephemeral_reply};
 use anyhow::{Context, anyhow};
 use futures::Stream;
 use futures::StreamExt;
@@ -15,9 +15,10 @@ use lazy_static::lazy_static;
 use serenity::all::{CreateMessage, GuildChannel, MessageBuilder};
 use std::ops::Deref;
 use std::path::PathBuf;
+use tracing::instrument;
 
 lazy_static! {
-    pub static ref CONFIG_DIR: PathBuf = {
+    static ref CONFIG_DIR: PathBuf = {
         let mut buf = PathBuf::new();
         buf.push("config");
         buf
@@ -86,6 +87,33 @@ pub async fn list(ctx: PoiseContext<'_>) -> crate::Result<()> {
         ctx.send(response).await.map_err(|why| anyhow!(why))?;
     }
 
+    Ok(())
+}
+/// 发送消息，请限制在2000字内
+#[instrument(level = "trace")]
+#[poise::command(slash_command, owners_only)]
+async fn send_message(
+    ctx: PoiseContext<'_>,
+    channel: GuildChannel,
+    message: String,
+) -> crate::Result<()> {
+    log::trace!("机器人收到消息发送请求，正在检查……");
+    if message.len() >= 2000 {
+        return Err(anyhow!("消息长度超过2000字，请重新输入"));
+    }
+    log::trace!(
+        "发送请求检查通过，正在将消息[{}]发送到频道 {}",
+        &message[0..10],
+        channel.name
+    );
+
+    channel
+        .send_message(ctx, CreateMessage::new().content(message))
+        .await?;
+    log::trace!("消息发送成功");
+    log::trace!("正在通知用户");
+    ctx.send(create_ephemeral_reply("消息发送成功！")).await?;
+    log::trace!("通知完成");
     Ok(())
 }
 
@@ -198,11 +226,12 @@ async fn handle_show_prompt(ctx: PoiseContext<'_>) -> crate::Result<()> {
         .get::<BotDataKey>()
         .context("app数据目录访问失败")?;
     let (prompt, content) = bot_data.access().aiconfig.get_system_prompt()?;
-    let reply = create_ephemeral_reply(format!("已使用 {} 的提示文件\r\n {}", prompt, content));
+    let reply = create_ephemeral_reply(format!("已使用 {} 的提示文件\r\n > {}", prompt, content));
     ctx.send(reply).await?;
     Ok(())
 }
 
+/// 自动补全程序，把config目录下的md文件过滤出来返回给客户端
 async fn autocomplete_ai_prompt_list(
     _ctx: PoiseContext<'_>,
     partial: &str,
@@ -220,6 +249,7 @@ async fn autocomplete_ai_prompt_list(
     futures::stream::iter(names)
         .filter(move |name| futures::future::ready(name.starts_with(partial)))
 }
-pub fn manage_export() -> ExportVec {
-    vec![withdraw(), switch_system_prompt()]
+
+pub fn manage_export() -> CommandVec {
+    vec![withdraw(), switch_system_prompt(), send_message()]
 }

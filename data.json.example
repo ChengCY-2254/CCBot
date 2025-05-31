@@ -18,5 +18,11 @@
          },
          "system_prompt_file":"src/奶盖波波糖.md"
        },
-       "owners": []
+       "owners": [],
+       "bot_activity":{
+         "name": "RustRover",
+         "kind":0,
+         "state": null,
+         "url":null
+       }
 }

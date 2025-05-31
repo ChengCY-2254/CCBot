@@ -3,7 +3,7 @@
 
 use crate::cmd_system::utils::get_http_client;
 use crate::utils::UpSafeCell;
-use crate::{ExportVec, PoiseContext};
+use crate::{CommandVec, PoiseContext};
 use anyhow::{Context, anyhow};
 use lazy_static::lazy_static;
 use poise::{CreateReply, async_trait};
@@ -216,6 +216,6 @@ impl EventHandler for TrackErrorNotifier {
     }
 }
 
-pub fn music_export() -> ExportVec {
+pub fn music_export() -> CommandVec {
     vec![music()]
 }
