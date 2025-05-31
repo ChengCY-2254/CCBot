@@ -103,7 +103,7 @@ async fn send_message(
     }
     log::trace!(
         "发送请求检查通过，正在将消息[{}]发送到频道 {}",
-        &message[0..10],
+        &message,
         channel.name
     );
 
