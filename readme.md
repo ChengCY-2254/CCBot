@@ -16,7 +16,7 @@
 - `/music join <channel>`:加入语音频道
 - `/music leave <channel>`:离开语音频道
 - `/music play <url>`:使用[yt-dlp](https://github.com/yt-dlp/yt-dlp)作为支持。`[关键词|AV|BV]定位B站资源|直接链接]`
-- `/stop`: 停止播放
+- `/music stop`: 停止播放
 
 **通用命令**
 

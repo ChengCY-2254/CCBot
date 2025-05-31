@@ -1,3 +1,4 @@
+/// 机器人配置文件工具包
 use crate::{UpSafeCell, read_file};
 use anyhow::anyhow;
 use lazy_static::lazy_static;
@@ -7,17 +8,12 @@ use serenity::all::{ActivityType, ChannelId, Message, UserId};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 
-/// 机器人需要保存的配置
-pub type Data = UpSafeCell<DataInner>;
-/// [crate::macros::add_sub_mod]所使用的导出类型
-pub type CommandVec = Vec<poise::Command<(), Error>>;
-///错误类型
-pub type Error = anyhow::Error;
-///上下文类型
-pub type PoiseContext<'a> = poise::Context<'a, (), Error>;
+/// 机器人需要保存的配置类型
+pub type Data = UpSafeCell<DataConfig>;
 
 lazy_static! {
-     static ref SYS_USER_PTOMPT_MESSAGE: AIMessage =
+    /// 系统提示
+    static ref SYS_USER_PTOMPT_MESSAGE: AIMessage =
         AIMessage::new("system", "以下是用户的最新输入");
     /// 不使用@规则
      static ref NO_AT_PROMPT_MESSAGE:AIMessage=AIMessage::new("system","这里是用户在对你私聊，可以不使用@");
@@ -34,7 +30,7 @@ lazy_static! {
 /// 需要在创建时检查是否有配置文件夹
 /// 如果没有，放出示例配置文件，然后退出。
 /// 如果有，那就进入服务状态
-pub struct DataInner {
+pub struct DataConfig {
     /// 需要监控的频道ID，进了这个set的频道发送消息后都会撤回。
     pub monitored_channels: HashSet<ChannelId>,
     /// ai配置
@@ -45,7 +41,7 @@ pub struct DataInner {
     pub bot_activity: ActivityData,
 }
 
-impl DataInner {
+impl DataConfig {
     /// 添加一个需要监控的频道
     pub fn add_monitored_channel(&mut self, channel_id: ChannelId) {
         self.monitored_channels.insert(channel_id);
@@ -56,9 +52,9 @@ impl DataInner {
     }
 }
 
-impl DataInner {
+impl DataConfig {
     /// 给定一个路径，读取数据文件并返回数据
-    pub fn new(path: impl AsRef<Path> + std::fmt::Debug) -> crate::Result<DataInner> {
+    pub fn new(path: impl AsRef<Path> + std::fmt::Debug) -> crate::Result<DataConfig> {
         read_file(path)
     }
     /// 保存数据文件

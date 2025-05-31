@@ -1,12 +1,14 @@
 //! 这个模块用于展示帮助信息
 
-use crate::model::{CommandVec, PoiseContext};
 use crate::utils::create_ephemeral_reply;
+use crate::{CommandVec, PoiseContext};
 
+const HELP: &str = include_str!("help.md");
 #[poise::command(slash_command)]
 /// 机器人的帮助说明
 pub async fn help(ctx: PoiseContext<'_>) -> crate::Result<()> {
-    ctx.send(create_ephemeral_reply(format!("欢迎使用 CCBot {}",crate::VERSION))).await?;
+    let content = format!("当前程序版本{}\r\n{}", crate::VERSION, HELP);
+    ctx.send(create_ephemeral_reply(content)).await?;
     Ok(())
 }
 

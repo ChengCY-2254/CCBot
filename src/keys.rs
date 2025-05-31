@@ -11,5 +11,5 @@ impl TypeMapKey for HttpKey {
 pub struct BotDataKey;
 
 impl TypeMapKey for BotDataKey {
-    type Value = crate::model::Data;
+    type Value = crate::config::Data;
 }

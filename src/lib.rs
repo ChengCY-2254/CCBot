@@ -9,23 +9,32 @@
 #[macro_use]
 mod macros;
 mod cmd_system;
+mod config;
 mod hub_system;
 mod keys;
-mod model;
 pub mod utils;
 
 use crate::keys::BotDataKey;
 use crate::keys::HttpKey;
-pub use anyhow::Error;
 pub use anyhow::Result;
-use model::*;
+use config::*;
 use serenity::all::UserId;
 use serenity::prelude::*;
 use songbird::SerenityInit;
 use std::collections::HashSet;
 use utils::*;
+
 /// 版本信息
 pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
+
+/// [crate::macros::add_sub_mod]所使用的导出类型
+pub type CommandVec = Vec<poise::Command<(), Error>>;
+
+///错误类型
+pub type Error = anyhow::Error;
+
+///上下文类型
+pub type PoiseContext<'a> = poise::Context<'a, (), Error>;
 /// 机器人的启动入口
 pub async fn run(token: String) -> Result<()> {
     // 成员加入/离开/更新
@@ -44,7 +53,7 @@ pub async fn run(token: String) -> Result<()> {
         GatewayIntents::DIRECT_MESSAGES;
     let http_client = reqwest::Client::new();
     let data: Data = unsafe {
-        let mut data = DataInner::new("config/data.json").map_err(|e| {
+        let mut data = DataConfig::new("config/data.json").map_err(|e| {
             log::error!("Error loading data: {:?}", e);
             anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
         })?;
@@ -60,7 +69,6 @@ pub async fn run(token: String) -> Result<()> {
         #[allow(unused_mut)]
         let mut client = Client::builder(token, gateway)
             .register_songbird()
-            // .event_handler(hub_system::GuildMessageHandler)
             .event_handler(hub_system::ManagerHandler)
             .event_handler(hub_system::AiHandler)
             .event_handler(hub_system::StartHandler)
