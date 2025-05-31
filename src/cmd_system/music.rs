@@ -130,7 +130,6 @@ pub async fn join(
     }
     let mut handler = handler_lock.lock().await;
     handler.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier);
-    // handler.add_global_event(Event::Track(TrackEvent::End))
     let reply = CreateReply::default()
         .ephemeral(true)
         .content(format!("已加入语音频道: {}", channel.name));
@@ -139,7 +138,6 @@ pub async fn join(
 }
 
 /// 离开一个语音频道
-/// todo 使用上面存放的CURRENT_JOIN_CHANNEL进行离开操作
 #[poise::command(slash_command, owners_only)]
 pub async fn leave(ctx: PoiseContext<'_>) -> crate::Result<()> {
     let cur_channel = CURRENT_JOIN_CHANNEL.access().clone();

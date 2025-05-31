@@ -24,6 +24,7 @@
 - `status`:设置机器人状态
 - `clear <amount>`:清除<amount>聊天记录
 - `switch_prompt <file_name>`:设置ai的系统提示词，提示词存放路径在`config/`下，扩展名为`.md`
+- `send_message <channel> <message>`: 发送消息到指定频道
 
 **管理命令**
 
