@@ -1,0 +1,5 @@
+services:
+  cc-bot:
+    image: cc-bot:v1
+    volumes:
+      - './config:/app/config'
