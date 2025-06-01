@@ -1,6 +1,6 @@
-use crate::HttpKey;
 use crate::keys::BotDataKey;
-use anyhow::{Context as AnyHowContext, anyhow};
+use crate::HttpKey;
+use anyhow::{anyhow, Context as AnyHowContext};
 use serenity::all::{EditMessage, GetMessages, Message};
 use serenity::async_trait;
 use serenity::prelude::{Context, EventHandler};

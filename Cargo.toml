@@ -43,3 +43,6 @@ paste = "1.0.15"
 [dependencies.symphonia]
 version = "0.5"
 features = ["all"]
+
+[features]
+yt-dlp = []

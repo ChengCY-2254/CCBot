@@ -8,27 +8,28 @@
 //! # 定义CCBot的🤖相关
 #[macro_use]
 mod macros;
-mod cmd_system;
+mod bot;
+mod commands;
 mod config;
-mod hub_system;
 mod keys;
+mod shared;
 pub mod utils;
+#[cfg(feature = "yt-dlp")]
+mod yt_dlp;
 
+use crate::config::data_config::DataConfig;
 use crate::keys::BotDataKey;
 use crate::keys::HttpKey;
+use crate::shared::UpSafeCell;
 pub use anyhow::Result;
 use config::*;
 use serenity::all::UserId;
 use serenity::prelude::*;
 use songbird::SerenityInit;
 use std::collections::HashSet;
-use utils::*;
 
 /// 版本信息
 pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
-
-/// [crate::macros::add_sub_mod]所使用的导出类型
-pub type CommandVec = Vec<poise::Command<(), Error>>;
 
 ///错误类型
 pub type Error = anyhow::Error;
@@ -69,9 +70,9 @@ pub async fn run(token: String) -> Result<()> {
         #[allow(unused_mut)]
         let mut client = Client::builder(token, gateway)
             .register_songbird()
-            .event_handler(hub_system::ManagerHandler)
-            .event_handler(hub_system::AiHandler)
-            .event_handler(hub_system::StartHandler)
+            .event_handler(bot::handlers::ManagerHandler)
+            .event_handler(bot::handlers::AiHandler)
+            .event_handler(bot::handlers::StartHandler)
             .framework(frame_work)
             .type_map_insert::<HttpKey>(http_client)
             .type_map_insert::<BotDataKey>(data);
@@ -88,15 +89,14 @@ pub async fn run(token: String) -> Result<()> {
 
 /// 命令行框架程序
 pub fn frame_work(owners: HashSet<UserId>) -> poise::Framework<(), Error> {
-    use crate::cmd_system;
     // 配置文件要在这里读取
     log::info!("create framework");
     // 导入命令行
     let mut commands = vec![];
-    commands.append(&mut cmd_system::manage_export());
-    commands.append(&mut cmd_system::general_export());
-    commands.append(&mut cmd_system::music_export());
-    commands.append(&mut cmd_system::help_export());
+    commands.append(&mut commands::manage_export());
+    commands.append(&mut commands::general_export());
+    commands.append(&mut commands::music_export());
+    commands.append(&mut commands::help_export());
 
     let framework: poise::Framework<(), Error> = poise::Framework::builder()
         .setup(|ctx, _ready, framework| {

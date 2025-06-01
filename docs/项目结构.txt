@@ -1,0 +1,55 @@
+src/
+├── bot
+│   ├── handlers
+│   │   ├── ai.rs
+│   │   ├── guild_message.rs
+│   │   ├── manager.rs
+│   │   └── start.rs
+│   └── mod.rs
+├── commands
+│   ├── general
+│   │   ├── ping.rs
+│   │   ├── register.rs
+│   │   └── status.rs
+│   ├── manage
+│   │   ├── withdraw.rs
+│   │   ├── send_message.rs
+│   │   └── switch_prompt.rs
+│   ├── music
+│   │   ├── play.rs
+│   │   ├── join.rs
+│   │   ├── leave.rs
+│   │   └── stop.rs
+│   ├── help
+│   │   └── help.rs
+│   └── mod.rs
+├── config
+│   ├── ai_config.rs
+│   ├── data_config.rs
+│   └── mod.rs
+├── keys.rs
+├── utils.rs
+├── macros.rs
+├── lib.rs
+└── main.rs
+
+
+bot 模块
+handlers: 这个子模块包含了所有与 Discord 机器人交互相关的事件处理器。例如：
+ai.rs: 处理 AI 相关的消息响应。
+guild_message.rs: 处理服务器内的消息。
+manager.rs: 管理撤回列表中的频道消息。
+start.rs: 在启动时设置机器人的状态等初始化操作。
+commands 模块
+general: 包含通用命令，比如 ping, register, set_status 和 clear。
+manage: 包括管理命令，如 withdraw, send_message, switch_prompt。
+music: 音乐播放相关命令，如 play, join, leave, stop。
+help: 提供帮助文档的命令实现。
+config 模块
+存储配置相关的结构体和方法，分为 ai_config.rs（AI 设置）和 data_config.rs（基础数据配置）。
+其他顶层模块
+keys.rs: 定义类型映射键用于 Serenity 的 TypeMap。
+utils.rs: 工具函数，如时间转换、创建临时回复等。
+macros.rs: 自定义宏定义。
+lib.rs: 主库文件，包含入口点和其他模块的导入。
+main.rs: 应用程序的主函数，负责初始化并运行机器人。

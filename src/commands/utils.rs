@@ -1,7 +1,7 @@
 //! # 工具模块
+use crate::{Error, HttpKey, PoiseContext};
 use anyhow::Context;
 use reqwest::Client;
-use crate::{Error, HttpKey, PoiseContext};
 
 /// 快速从[PoiseContext]中获取HTTP客户端
 pub async fn get_http_client<'a>(ctx: &'a PoiseContext<'a>) -> Result<Client, Error> {
