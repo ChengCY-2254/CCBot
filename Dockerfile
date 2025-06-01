@@ -13,6 +13,7 @@ RUN cargo build --release
 FROM ubuntu:latest
 WORKDIR /app
 RUN apt-get update && \
-    apt-get install -y yt-dlp
+    apt-get install -y yt-dlp &&\
+    rm  -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/cc-bot /app/
 CMD ["/app/cc-bot"]
