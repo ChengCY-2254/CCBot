@@ -5,6 +5,7 @@ use serenity::all::{EditMessage, GetMessages, Message};
 use serenity::async_trait;
 use serenity::prelude::{Context, EventHandler};
 use std::time::Duration;
+use std::vec::IntoIter;
 
 #[derive(Debug)]
 pub struct AiHandler;
@@ -60,13 +61,13 @@ impl AiHandler {
     async fn request_ai_reply(
         ctx: &Context,
         new_message: &Message,
-        history: &[Message],
+        history: IntoIter<Message>,
         content: &str,
         is_private_chat: bool,
     ) -> crate::Result<String> {
         log::info!(
-            "频道 {:#?} 获取到的消息历史 {:?}",
-            new_message.channel_id.to_channel(ctx).await,
+            "频道 {} 获取到的消息历史 {:?}",
+            new_message.channel_id,
             history
         );
         let mut interval = tokio::time::interval(Duration::from_secs(4));
@@ -151,7 +152,7 @@ impl AiHandler {
             // 处理消息 回复消息id
             // 在获取回复的时候，继续设置编写状态
             let response = {
-                Self::request_ai_reply(ctx, new_message, &history, content, is_private_chat).await
+                Self::request_ai_reply(ctx, new_message, history.into_iter(), content, is_private_chat).await
             };
 
             match response {
@@ -221,7 +222,7 @@ impl AiHandler {
         if user_id == bot_id {
             return Ok(());
         }
-        let content = new_message.content.clone();
+        let content = &new_message.content;
         //排除掉命令
         if content.starts_with("/") || content.ends_with("reg") {
             return Ok(());
@@ -236,7 +237,7 @@ impl AiHandler {
         let is_private_chat = new_message.is_private();
         log::info!("已获取私聊历史消息记录，共计 {} 条", history.len());
         let response =
-            Self::request_ai_reply(ctx, new_message, &history, &content, is_private_chat).await;
+            Self::request_ai_reply(ctx, new_message, history.into_iter(), content, is_private_chat).await;
         match response {
             Ok(response) => {
                 if let Err(why) = bot_message.delete(ctx).await {

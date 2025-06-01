@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use serenity::all::{ActivityType, ChannelId, Message, UserId};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
+use std::vec::IntoIter;
 
 /// 机器人需要保存的配置类型
 pub type Data = UpSafeCell<DataConfig>;
@@ -16,7 +17,7 @@ lazy_static! {
     static ref SYS_USER_PTOMPT_MESSAGE: AIMessage =
         AIMessage::new("system", "以下是用户的最新输入");
     /// 不使用@规则
-     static ref NO_AT_PROMPT_MESSAGE:AIMessage=AIMessage::new("system","这里是用户在对你私聊，可以不使用@");
+     static ref NO_AT_PROMPT_MESSAGE:AIMessage=AIMessage::new("system","这里是用户在对你私聊，不能使用@");
     /// 在这里缓存住系统提示
      static ref SYSTEM_PROMPT_CACHE: UpSafeCell<String> = unsafe {UpSafeCell::new(String::new())};
 }
@@ -108,17 +109,21 @@ impl AIConfig {
         &self,
         http_client: &reqwest::Client,
         message: &str,
-        history: &[Message],
+        history: IntoIter<Message>,
         is_private_chat: bool,
     ) -> crate::Result<String> {
         // 插入时间戳消息提示
-        let mut messages: VecDeque<AIMessage> = history.iter().map(into_ai_message).collect();
+        let mut messages: VecDeque<AIMessage> = history.map(into_ai_message).collect();
         messages.push_front(AIMessage::new(
             "system",
             SYSTEM_PROMPT_CACHE.access().clone().as_str(),
         ));
+        // 如果是私聊，就插入一个提示
         if is_private_chat {
             messages.push_back(NO_AT_PROMPT_MESSAGE.clone());
+        }
+        if self.enable_thinking {
+            messages.push_back(AIMessage::new("assistant", "思考中..."));
         }
         messages.push_back(SYS_USER_PTOMPT_MESSAGE.clone());
         messages.push_back(AIMessage::new("user", message));
@@ -218,7 +223,7 @@ impl From<ActivityData> for serenity::gateway::ActivityData {
 }
 
 /// 将serenity的Message转换为AIMessage
-pub fn into_ai_message(message: &Message) -> AIMessage {
+pub fn into_ai_message(message: Message) -> AIMessage {
     let message_id = message.id;
     let message_author_id = message.author.id;
     let message_times_map = message.timestamp;
@@ -229,7 +234,7 @@ pub fn into_ai_message(message: &Message) -> AIMessage {
     };
 
     let content = format!(
-        "SYSTEM：以下内容为补充参考信息\r\n```message_id:{message_id}\r\nmessage_author_id:{message_author_id}\r\nmessage_times_map:{message_times_map}\r\n```\
+        "SYSTEM：以下内容为补充参考信息:\r\nmessage_id:{message_id}\r\nuser_id:{message_author_id}\r\nmessage_times_map:{message_times_map}\r\n
         SYSTEM:补充说明结束，以下是用户内容\r\n\
         {}",
         message.content
