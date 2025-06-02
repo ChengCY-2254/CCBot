@@ -35,11 +35,16 @@ pub(super) async fn clear(
             // 因为机器人无法删除私聊中的用户消息
             // 但是频道场景下，消息是可以删除的。
             #[allow(deprecated)]
-            if message.is_private()&&message.author.id != bot_id  {
-                continue;
+            if message.is_private()  {
+                if message.author.id != bot_id { 
+                    continue
+                }
+                message.delete(ctx.serenity_context()).await?;
+                delete_count += 1;
+            }else {
+                message.delete(ctx.serenity_context()).await?;
+                delete_count += 1;    
             }
-            message.delete(ctx.serenity_context()).await?;
-            delete_count += 1;
         }
         let response = create_ephemeral_reply(format!("已删除{}条消息", delete_count));
         ctx.send(response).await?;
