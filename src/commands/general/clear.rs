@@ -15,7 +15,6 @@ pub(super) async fn clear(
     ctx: PoiseContext<'_>,
     #[description = "清除的消息数量，如果是私聊，只能删除机器人自己的消息"] count: u8,
 ) -> crate::Result<()> {
-    let bot_id = ctx.serenity_context().cache.current_user().id;
     let messages = ctx
         .channel_id()
         .messages(ctx.serenity_context(), GetMessages::new().limit(count))
