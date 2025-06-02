@@ -34,7 +34,7 @@ pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
 ///错误类型
 pub type Error = anyhow::Error;
 
-///上下文类型
+///[poise::Context]的自定义上下文类型
 pub type PoiseContext<'a> = poise::Context<'a, (), Error>;
 /// 机器人的启动入口
 pub async fn run(token: String) -> Result<()> {
