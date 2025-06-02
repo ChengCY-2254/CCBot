@@ -1,4 +1,6 @@
 use crate::PoiseContext;
+use crate::keys::BotDataKey;
+use anyhow::Context;
 use futures::Stream;
 use futures::StreamExt;
 use poise::CreateReply;
@@ -23,33 +25,15 @@ pub(super) async fn set_status(
     #[description = "内容"] activity_name: String,
     #[description = "活动网址"] url: Option<String>,
 ) -> crate::Result<()> {
+    let activity_data = match_activity_type(&activity_type,activity_name,url);
     {
-        let activity_name = activity_name.clone();
-        match activity_type.as_str() {
-            "playing" => {
-                ctx.serenity_context()
-                    .set_activity(Some(ActivityData::playing(activity_name)));
-            }
-            "streaming" => {
-                ctx.serenity_context()
-                    .set_activity(Some(ActivityData::streaming(
-                        activity_name,
-                        url.unwrap_or_else(|| "https://ys.mihoyo.com".to_owned()),
-                    )?));
-            }
-            "listening" => {
-                ctx.serenity_context()
-                    .set_activity(Some(ActivityData::listening(activity_name)));
-            }
-            "watching" => {
-                ctx.serenity_context()
-                    .set_activity(Some(ActivityData::watching(activity_name)));
-            }
-            _ => {
-                ctx.serenity_context()
-                    .set_activity(Some(ActivityData::custom(activity_name)));
-            }
-        };
+        ctx.serenity_context().set_activity(Some(activity_data.clone()));
+        let type_map = ctx.serenity_context().data.write().await;
+        let bot_data = type_map.get::<BotDataKey>();
+        let mut bot_data = bot_data.context("app数据目录访问失败")?.exclusive_access();
+        bot_data.bot_activity = crate::config::ActivityData::from(activity_data);
+        bot_data.save("/config")?;
+        
     }
     //发送仅自己可见的消息
     let reply = CreateReply::default().ephemeral(true).content("状态已更新");
@@ -61,8 +45,26 @@ pub(super) async fn set_status(
 async fn autocomplete_activity_type(
     _ctx: PoiseContext<'_>,
     partial: &str,
-) -> impl Stream<Item=String> {
+) -> impl Stream<Item = String> {
     futures::stream::iter(["playing", "listening", "streaming", "watching", "custom"])
         .filter(move |name| futures::future::ready(name.starts_with(partial)))
         .map(|name| name.to_string())
+}
+/// 匹配活动类型
+fn match_activity_type(
+    activity_str: &str,
+    activity_name: impl Into<String>,
+    url: Option<String>,
+) -> ActivityData {
+    match activity_str {
+        "playing" => ActivityData::playing(activity_name),
+        "streaming" => ActivityData::streaming(
+            activity_name,
+            url.unwrap_or_else(|| "https://ys.mihoyo.com".to_owned()),
+        )
+        .unwrap(),
+        "listening" => ActivityData::listening(activity_name),
+        "watching" => ActivityData::watching(activity_name),
+        _ => ActivityData::custom(activity_name),
+    }
 }

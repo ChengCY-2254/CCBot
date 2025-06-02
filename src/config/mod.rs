@@ -75,3 +75,14 @@ impl From<ActivityData> for serenity::gateway::ActivityData {
         }
     }
 }
+
+impl From<serenity::gateway::ActivityData> for ActivityData {
+    fn from(value: serenity::gateway::ActivityData) -> Self {
+        ActivityData {
+            name: value.name,
+            kind: value.kind,
+            state: value.state,
+            url: value.url,
+        }
+    }
+}
