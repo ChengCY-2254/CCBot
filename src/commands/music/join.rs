@@ -55,3 +55,21 @@ impl EventHandler for TrackErrorNotifier {
         None
     }
 }
+// 
+// struct MusicEndNotifier;
+// 
+// #[async_trait]
+// impl EventHandler for MusicEndNotifier{
+//     async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
+//         if let  EventContext::Track(track_list)=ctx{
+//             for (state,handler)in *track_list{
+//                 if state.playing.is_done(){
+//                     log::info!("Track {:?} has ended",handler.uuid());
+//                     let channel = CURRENT_JOIN_CHANNEL.access();
+//                     channel.clone().unwrap().edit(ctx)
+//                 }
+//             }
+//         }
+//         None
+//     }
+// }

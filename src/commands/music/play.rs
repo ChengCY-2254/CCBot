@@ -38,7 +38,11 @@ pub(super) async fn play(
         };
         handler.stop();
         log::info!("停止指令发布成功");
-        let _ = handler.play_input(YoutubeDl::new(http_client, source_url.clone()).into());
+
+        let track_handle = handler.play_input(YoutubeDl::new(http_client, source_url.clone()).into());
+        
+        super::utils::set_track_handle(track_handle);
+
         log::info!("开始播放 {}", title);
         log::info!("开始响应信息");
         let response = format!("开始播放 [{title}]({source_url})");

@@ -10,7 +10,8 @@ pub(super) async fn ping(
     #[description = "选择一个用户"] user: Option<poise::serenity_prelude::User>,
 ) -> crate::Result<()> {
     if user.is_none() {
-        let response = create_ephemeral_reply("请选择一个用户");
+        let ping = ctx.ping().await.as_millis();
+        let response = create_ephemeral_reply(format!("到Discord数据中心的延迟为**{}**ms", ping));
         ctx.send(response).await?;
         return Ok(());
     }

@@ -31,6 +31,7 @@ pub async fn leave(ctx: PoiseContext<'_>) -> crate::Result<()> {
                 if current_join_channel.is_some() {
                     let _ = current_join_channel.take();
                 }
+                super::utils::clear_current_track_handle();
             }
         }
         ctx.send(

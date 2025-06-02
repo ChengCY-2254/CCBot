@@ -107,7 +107,7 @@ pub fn frame_work(owners: HashSet<UserId>) -> poise::Framework<(), Error> {
                     poise::builtins::register_in_guild(ctx, &framework.options().commands, id)
                         .await?;
                 }
-                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                // poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(())
             })
         })
