@@ -11,7 +11,7 @@ pub struct ClearHandler;
 impl EventHandler for ClearHandler {
     async fn message(&self, ctx: Context, new_message: Message) {
         //排除机器人自己的消息
-        if ctx.cache.current_user().id != new_message.author.id {
+        if ctx.cache.current_user().id == new_message.author.id {
             return;
         }
         //判定如果是消息
