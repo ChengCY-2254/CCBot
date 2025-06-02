@@ -73,6 +73,7 @@ pub async fn run(token: String) -> Result<()> {
             .event_handler(bot::handlers::ManagerHandler)
             .event_handler(bot::handlers::AiHandler)
             .event_handler(bot::handlers::StartHandler)
+            .event_handler(bot::handlers::ClearHandler)
             .framework(frame_work)
             .type_map_insert::<HttpKey>(http_client)
             .type_map_insert::<BotDataKey>(data);

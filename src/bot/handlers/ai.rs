@@ -224,7 +224,7 @@ impl AiHandler {
         }
         let content = &new_message.content;
         //排除掉命令
-        if content.starts_with("/") || content.ends_with("reg") {
+        if content.ends_with("reg")||content.starts_with("!") {
             return Ok(());
         }
         log::info!("用户 {} 正在与机器人私聊", new_message.author);
