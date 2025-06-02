@@ -9,6 +9,7 @@ use songbird::{Event, EventContext, EventHandler, TrackEvent};
 #[poise::command(slash_command, owners_only)]
 pub(super) async fn join(
     ctx: PoiseContext<'_>,
+    #[description = "加入的语音频道"]
     #[channel_types("Voice")] channel: GuildChannel,
 ) -> crate::Result<()> {
     let (guild_id, channel_id) = {

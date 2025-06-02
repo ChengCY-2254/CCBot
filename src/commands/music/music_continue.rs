@@ -2,6 +2,7 @@
 
 use crate::PoiseContext;
 
+/// 继续播放机器人暂停的音乐
 #[poise::command(slash_command, rename = "继续播放")]
 pub(super) async fn music_continue(ctx: PoiseContext<'_>) -> crate::Result<()> {
     let track_handle = super::utils::get_current_track_handle();

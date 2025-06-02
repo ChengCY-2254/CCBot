@@ -1,5 +1,6 @@
 //! # 音乐模块
 //! 语音方向的内容
+#![deny(missing_docs)]
 
 mod join;
 mod leave;
