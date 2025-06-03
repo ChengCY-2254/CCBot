@@ -18,12 +18,27 @@ impl EventHandler for ClearHandler {
         if !new_message.content.starts_with("!clear") {
             return;
         }
+        log::info!("用户发出了清除消息命令，正在解析命令参数");
 
         //获取参数
         // !clear 5
         let args = new_message.content.split_whitespace().collect::<Vec<_>>();
+        log::info!( "用户发送的清除消息命令参数为：{}", args[1]);
+        if args.len() != 2 {
+            log::info!("用户发送的清除消息命令参数不正确");
+            return;
+        }
         if args.len() == 2 {
             let count = args[1].parse::<u8>().unwrap();
+            if count > 100 {
+                log::info!("用户发送的清除消息命令参数不正确");
+                new_message
+                    .channel_id
+                    .send_message(ctx, CreateMessage::new().content("参数错误，必须在100以下"))
+                    .await
+                    .expect("无法向频道发送消息");
+                return;
+            }
             if count != 0 {
                 let messages = new_message
                     .channel_id
@@ -48,14 +63,6 @@ impl EventHandler for ClearHandler {
                             delete_count += 1;
                         }
                     }
-                    new_message
-                        .channel_id
-                        .send_message(
-                            &ctx,
-                            CreateMessage::new().content(format!("已删除 {} 条消息", delete_count)),
-                        )
-                        .await
-                        .expect("无法向频道发送消息内容");
                     log::info!("已删除 {} 条消息", delete_count);
                 }
             }
