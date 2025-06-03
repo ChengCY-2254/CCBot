@@ -47,7 +47,7 @@ async fn handle_switch_prompt(ctx: PoiseContext<'_>, file_name: String) -> crate
             .context("app数据目录访问失败")?;
         let mut bot_data = bot_data.exclusive_access();
         bot_data.aiconfig.use_others_prompt(&file_name)?;
-        bot_data.save("config")?;
+        bot_data.save_to_config()?;
         let (prompt_name, content) = bot_data.aiconfig.get_system_prompt()?;
         (prompt_name, content)
     };

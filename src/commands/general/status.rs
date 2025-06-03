@@ -32,7 +32,7 @@ pub(super) async fn set_status(
         let bot_data = type_map.get::<BotDataKey>();
         let mut bot_data = bot_data.context("app数据目录访问失败")?.exclusive_access();
         bot_data.bot_activity = crate::config::ActivityData::from(activity_data);
-        bot_data.save("/config")?;
+        bot_data.save_to_config()?;
         
     }
     //发送仅自己可见的消息

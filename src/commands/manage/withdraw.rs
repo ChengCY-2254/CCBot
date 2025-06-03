@@ -78,7 +78,7 @@ async fn handle_add(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Resu
         let name = channel.name.clone();
         if !exists {
             data.add_monitored_channel(channel.id);
-            data.save("config/")?;
+            data.save_to_config()?;
         }
         (exists, name)
     };
@@ -110,7 +110,7 @@ async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::R
         let name = channel.name.clone();
         if exists {
             data.remove_monitored_channel(channel.id);
-            data.save("config/")?;
+            data.save_to_config()?;
         }
         (exists, name)
     };

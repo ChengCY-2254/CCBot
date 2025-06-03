@@ -55,4 +55,8 @@ impl DataConfig {
         serde_json::to_writer_pretty(file, self)?;
         Ok(())
     }
+    /// 保存到config目录下
+    pub fn save_to_config(&self)->crate::Result<()>{
+         self.save("config")
+    }
 }
