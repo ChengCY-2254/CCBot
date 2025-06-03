@@ -103,12 +103,12 @@ pub fn frame_work(owners: HashSet<UserId>) -> poise::Framework<(), Error> {
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 // 为每个缓存的公会注册命令
-                let guilds = ctx.cache.guilds();
-                for id in guilds {
-                    poise::builtins::register_in_guild(ctx, &framework.options().commands, id)
-                        .await?;
-                }
-                // poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                // let guilds = ctx.cache.guilds();
+                // for id in guilds {
+                //     poise::builtins::register_in_guild(ctx, &framework.options().commands, id)
+                //         .await?;
+                // }
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(())
             })
         })
