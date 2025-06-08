@@ -1,6 +1,6 @@
-use crate::keys::BotDataKey;
 use crate::HttpKey;
-use anyhow::{anyhow, Context as AnyHowContext};
+use crate::keys::BotDataKey;
+use anyhow::{Context as AnyHowContext, anyhow};
 use serenity::all::{EditMessage, GetMessages, Message};
 use serenity::async_trait;
 use serenity::prelude::{Context, EventHandler};
@@ -133,7 +133,7 @@ impl AiHandler {
             log::info!("用户 {} 提及了机器人", new_message.author);
             log::info!("内容是 {}", new_message.content);
             // 如果是注册指令，就不处理
-            if new_message.content.ends_with("reg") {
+            if new_message.content.ends_with("reg") || new_message.content.starts_with("!") {
                 return Ok(());
             }
             log::trace!("开始发送思考消息");
@@ -152,7 +152,14 @@ impl AiHandler {
             // 处理消息 回复消息id
             // 在获取回复的时候，继续设置编写状态
             let response = {
-                Self::request_ai_reply(ctx, new_message, history.into_iter(), content, is_private_chat).await
+                Self::request_ai_reply(
+                    ctx,
+                    new_message,
+                    history.into_iter(),
+                    content,
+                    is_private_chat,
+                )
+                .await
             };
 
             match response {
@@ -224,7 +231,7 @@ impl AiHandler {
         }
         let content = &new_message.content;
         //排除掉命令
-        if content.ends_with("reg")||content.starts_with("!") {
+        if content.ends_with("reg") || content.starts_with("!") {
             return Ok(());
         }
         log::info!("用户 {} 正在与机器人私聊", new_message.author);
@@ -236,8 +243,14 @@ impl AiHandler {
         #[allow(deprecated)]
         let is_private_chat = new_message.is_private();
         log::info!("已获取私聊历史消息记录，共计 {} 条", history.len());
-        let response =
-            Self::request_ai_reply(ctx, new_message, history.into_iter(), content, is_private_chat).await;
+        let response = Self::request_ai_reply(
+            ctx,
+            new_message,
+            history.into_iter(),
+            content,
+            is_private_chat,
+        )
+        .await;
         match response {
             Ok(response) => {
                 if let Err(why) = bot_message.delete(ctx).await {
