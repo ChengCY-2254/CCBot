@@ -97,7 +97,6 @@ pub fn frame_work(owners: HashSet<UserId>) -> poise::Framework<(), Error> {
     commands.append(&mut commands::manage_export());
     commands.append(&mut commands::general_export());
     commands.append(&mut commands::music_export());
-    commands.append(&mut commands::help_export());
 
     let framework: poise::Framework<(), Error> = poise::Framework::builder()
         .setup(|ctx, _ready, framework| {

@@ -6,5 +6,3 @@ create_command_module!(general);
 create_command_module!(music);
 // 管理模块
 create_command_module!(manage);
-// 帮助命令
-create_command_module!(help);

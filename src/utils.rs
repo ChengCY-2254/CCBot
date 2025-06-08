@@ -9,9 +9,6 @@ use std::io::BufReader;
 use tokio::runtime::Runtime;
 use tracing::instrument;
 
-// lazy_static! {
-//     static ref UTC8: FixedOffset = FixedOffset::east_opt(8 * 3600).unwrap();
-// }
 const UTF8: FixedOffset = FixedOffset::east_opt(8 * 3600).unwrap();
 
 /// 格式化时间为UTC8
