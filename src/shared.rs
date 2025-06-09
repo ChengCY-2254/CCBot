@@ -28,6 +28,7 @@ impl<T> Deref for DataBox<T> {
 
 /// UpSafeCell 是一个线程安全的 RefCell 封装
 #[derive(Debug, Default, Deserialize, Serialize)]
+#[repr(transparent)]
 pub struct UpSafeCell<T>(RefCell<T>);
 
 unsafe impl<T> Sync for UpSafeCell<T> {}

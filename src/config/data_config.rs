@@ -41,7 +41,9 @@ pub struct DataConfig {
     /// 机器人的活动
     pub bot_activity: ActivityData,
     /// 当前正在播放的频道
-    pub current_voice_channel:Option<GuildChannel>
+    pub current_voice_channel:Option<GuildChannel>,
+    /// 音量大小
+    pub volume: f32
 }
 
 impl DataConfig {

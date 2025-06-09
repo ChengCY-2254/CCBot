@@ -47,7 +47,7 @@ pub(super) async fn get_http_and_songbird(
 
     let manager = songbird::get(ctx.serenity_context())
         .await
-        .with_context(|| "获取语音客户端失败")?
+        .context("获取语音客户端失败")?
         .clone();
     log::info!("获取语音客户端成功");
     Ok((http_client, manager))
@@ -55,6 +55,10 @@ pub(super) async fn get_http_and_songbird(
 
 /// 设置当前播放的TrackHandle
 pub(super) fn set_track_handle(track_handle: TrackHandle) {
+    let volume = APP_STATE_MANAGER.get_app_state().access().volume;
+    track_handle
+        .set_volume(volume)
+        .expect("设置音量出现错误，请查看日志。");
     let mut current_track_handle = CURRENT_TRACK_HANDLE.deref().exclusive_access();
     current_track_handle.replace(track_handle);
 }
@@ -111,7 +115,19 @@ pub(super) fn get_current_voice_channel() -> crate::Result<GuildChannel> {
 pub(super) fn clear_voice_channel() {
     {
         let app_state = APP_STATE_MANAGER.get_app_state();
-        app_state.exclusive_access().current_voice_channel.take();    
+        app_state.exclusive_access().current_voice_channel.take();
     }
     APP_STATE_MANAGER.save().unwrap();
+}
+
+/// 格式化时间
+pub(super) fn format_chinese_time(secs: u64) -> String {
+    let secs = secs % 60;
+    let mins = (secs / 60) % 60;
+    let hours = secs / 3600;
+    if hours < 1 {
+        format!("{:02}:{:02}", mins, secs)
+    } else {
+        format!("{:02}:{:02}:{:02}", hours, mins, secs)
+    }
 }

@@ -9,7 +9,8 @@ use serenity::all::GetMessages;
     prefix_command,
     aliases("clear"),
     rename = "clear",
-    required_permissions = "MANAGE_MESSAGES"
+    required_permissions = "MANAGE_MESSAGES",
+    guild_only
 )]
 pub(super) async fn clear(
     ctx: PoiseContext<'_>,

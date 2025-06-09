@@ -34,7 +34,7 @@ impl AiHandler {
     async fn fetch_history(
         ctx: &Context,
         new_message: &Message,
-        _user_id: serenity::model::id::UserId,
+        user_id: serenity::model::id::UserId,
     ) -> Vec<Message> {
         let select = GetMessages::new().limit(50).before(new_message.id);
         new_message
@@ -43,7 +43,7 @@ impl AiHandler {
             .await
             .unwrap_or_default()
             .into_iter()
-            // .filter(|msg| msg.author.id == user_id || msg.author.bot)
+            .filter(|msg| msg.author.id == user_id || msg.author.bot)
             //获取开头不为`/`的消息，也就是排除命令内容
             .filter(|msg| !msg.content.starts_with("/"))
             .collect()
