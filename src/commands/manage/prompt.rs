@@ -7,6 +7,7 @@ use futures::StreamExt;
 use lazy_static::lazy_static;
 use std::ops::Deref;
 use std::path::PathBuf;
+use crate::config::data_config::GLOBAL_CONFIG_MANAGER;
 
 lazy_static! {
     static ref CONFIG_DIR: PathBuf = {
@@ -47,7 +48,7 @@ async fn handle_switch_prompt(ctx: PoiseContext<'_>, file_name: String) -> crate
             .context("app数据目录访问失败")?;
         let mut bot_data = bot_data.exclusive_access();
         bot_data.aiconfig.use_others_prompt(&file_name)?;
-        bot_data.save_to_config()?;
+        GLOBAL_CONFIG_MANAGER.save()?;
         let (prompt_name, content) = bot_data.aiconfig.get_system_prompt()?;
         (prompt_name, content)
     };

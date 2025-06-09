@@ -1,4 +1,3 @@
-use crate::commands::music::utils::CURRENT_JOIN_CHANNEL;
 use crate::PoiseContext;
 use anyhow::Context;
 use poise::{async_trait, CreateReply};
@@ -24,10 +23,7 @@ pub(super) async fn join(
         .clone();
     let handler_lock = manager.join(guild_id, channel_id).await?;
     {
-        let mut current_join_channel = CURRENT_JOIN_CHANNEL.exclusive_access();
-        if current_join_channel.is_none() {
-            let _ = current_join_channel.replace(channel.clone());
-        }
+        super::utils::set_current_voice_channel(channel.clone())?;
     }
     let mut handler = handler_lock.lock().await;
     handler.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier);

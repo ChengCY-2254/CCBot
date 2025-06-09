@@ -6,6 +6,7 @@ use futures::StreamExt;
 use poise::CreateReply;
 use serenity::all::ActivityData;
 use tracing::instrument;
+use crate::config::data_config::GLOBAL_CONFIG_MANAGER;
 
 ///机器人状态转换命令
 #[poise::command(
@@ -32,7 +33,7 @@ pub(super) async fn set_status(
         let bot_data = type_map.get::<BotDataKey>();
         let mut bot_data = bot_data.context("app数据目录访问失败")?.exclusive_access();
         bot_data.bot_activity = crate::config::ActivityData::from(activity_data);
-        bot_data.save_to_config()?;
+        GLOBAL_CONFIG_MANAGER.save()?;
         
     }
     //发送仅自己可见的消息

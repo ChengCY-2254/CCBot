@@ -17,12 +17,11 @@ pub mod utils;
 #[cfg(feature = "yt-dlp")]
 mod yt_dlp;
 
-use crate::config::data_config::DataConfig;
+use crate::config::data_config::GLOBAL_CONFIG_MANAGER;
 use crate::keys::BotDataKey;
 use crate::keys::HttpKey;
 use crate::shared::UpSafeCell;
 pub use anyhow::Result;
-use config::*;
 use serenity::all::UserId;
 use serenity::prelude::*;
 use songbird::SerenityInit;
@@ -53,16 +52,8 @@ pub async fn run(token: String) -> Result<()> {
         // 直接消息
         GatewayIntents::DIRECT_MESSAGES;
     let http_client = reqwest::Client::new();
-    let data: Data = unsafe {
-        let mut data = DataConfig::new("config/data.json").map_err(|e| {
-            log::error!("Error loading data: {:?}", e);
-            anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
-        })?;
-        // 初始化ai提示
-        log::info!("开始初始化ai系统提示");
-        data.aiconfig.init_prompt()?;
-        UpSafeCell::new(data)
-    };
+
+    let data = GLOBAL_CONFIG_MANAGER.get_global_data();
     // 初始化命令框架
     let frame_work = { frame_work(data.access().owners.clone()) };
 
@@ -101,12 +92,6 @@ pub fn frame_work(owners: HashSet<UserId>) -> poise::Framework<(), Error> {
     let framework: poise::Framework<(), Error> = poise::Framework::builder()
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
-                // 为每个缓存的公会注册命令
-                // let guilds = ctx.cache.guilds();
-                // for id in guilds {
-                //     poise::builtins::register_in_guild(ctx, &framework.options().commands, id)
-                //         .await?;
-                // }
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(())
             })

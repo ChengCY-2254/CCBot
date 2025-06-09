@@ -1,11 +1,14 @@
 //! 机器人配置文件
 
-use crate::config::{ai_config, ActivityData};
+use crate::config::{ActivityData, Data, ai_config};
+use crate::shared::UpSafeCell;
 use crate::utils::read_file;
+use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serenity::all::{ChannelId, UserId};
 use std::collections::HashSet;
 use std::path::Path;
+use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 #[serde(deny_unknown_fields)]
@@ -56,7 +59,47 @@ impl DataConfig {
         Ok(())
     }
     /// 保存到config目录下
-    pub fn save_to_config(&self)->crate::Result<()>{
-         self.save("config")
+    pub fn save_to_config(&self) -> crate::Result<()> {
+        self.save("config")
+    }
+}
+
+lazy_static! {
+    pub static ref GLOBAL_CONFIG_MANAGER: GlobalConfigManager = GlobalConfigManager::new()
+        .map_err(|e| {
+            log::error!("Error loading data: {:?}", e);
+            anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
+        })
+        .unwrap();
+}
+
+/// 全局配置管理器，不用库自带的管理器。
+/// 在管理器中创建并读取配置文件，然后通过管理器将配置文件映射出去。
+/// 该管理器将采用LazyStatic进行初始化，然后通过get_global_data获取数据。
+/// 也可以使用lambda来对作用域进行限制。
+pub struct GlobalConfigManager {
+    inner: Arc<Data>,
+}
+
+impl GlobalConfigManager {
+    pub fn new() -> crate::Result<Self> {
+        let mut inner = DataConfig::new("config/data.json").map_err(|e| {
+            log::error!("Error loading data: {:?}", e);
+            anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
+        })?;
+        inner.aiconfig.init_prompt()?;
+        unsafe {
+            Ok(Self {
+                inner: Arc::new(UpSafeCell::new(inner)),
+            })
+        }
+    }
+
+    pub fn get_global_data(&self) -> Arc<Data> {
+        Arc::clone(&self.inner)
+    }
+    
+     pub fn save(&self)->crate::Result<()> {
+        self.inner.access().save_to_config()
     }
 }

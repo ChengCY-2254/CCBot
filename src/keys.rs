@@ -1,4 +1,6 @@
 //! 定义类型映射键用于 Serenity 的 TypeMap
+
+use std::sync::Arc;
 use serenity::prelude::TypeMapKey;
 
 /// http请求的key
@@ -12,5 +14,5 @@ impl TypeMapKey for HttpKey {
 pub struct BotDataKey;
 
 impl TypeMapKey for BotDataKey {
-    type Value = crate::config::Data;
+    type Value = Arc<crate::config::Data>;
 }

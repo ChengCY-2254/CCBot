@@ -7,8 +7,9 @@ use poise::CreateReply;
 /// 离开一个语音频道
 #[poise::command(slash_command, owners_only)]
 pub async fn leave(ctx: PoiseContext<'_>) -> crate::Result<()> {
-    let cur_channel = CURRENT_JOIN_CHANNEL.access().clone();
-    if let Some(channel) = cur_channel {
+    let cur_channel = super::utils::get_current_voice_channel();
+    
+    if let Ok(channel) = cur_channel {
         let guild_id = channel.guild_id;
         let manager = songbird::get(ctx.serenity_context())
             .await

@@ -13,9 +13,10 @@ use crate::commands::general::help::help;
 use crate::commands::general::ping::ping;
 use crate::commands::general::register::register;
 use crate::commands::general::status::set_status;
+use crate::commands::general::version::version;
 use crate::macros::ExportCommand;
 
 /// 导出命令
 pub fn general_export() -> ExportCommand {
-    vec![ping(), register(), set_status(), clear(), help()]
+    vec![ping(), register(), set_status(), clear(), help(), version()]
 }

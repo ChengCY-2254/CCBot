@@ -74,9 +74,9 @@ pub(super) fn clear_current_track_handle() {
 #[allow(unused)]
 pub(super) async fn track_handle_scope<F, R>(
     future: F,
-) -> crate::Result<impl Future<Output = R> + Send>
+) -> crate::Result<impl Future<Output=R> + Send>
 where
-    F: FnOnce(TrackHandle) -> Pin<Box<dyn Future<Output = R> + Send>>,
+    F: FnOnce(TrackHandle) -> Pin<Box<dyn Future<Output=R> + Send>>,
 {
     let track_handle = get_current_track_handle().context("没有正在播放的音频");
     if let Ok(handle) = track_handle {
@@ -84,4 +84,16 @@ where
     } else {
         Err(anyhow::anyhow!("没有正在播放的音频"))
     }
+}
+
+///  设置当前语音频道
+pub(super) fn set_current_voice_channel(channel:GuildChannel)->crate::Result<()>{
+    let mut current_channel = CURRENT_JOIN_CHANNEL.deref().exclusive_access();
+    current_channel.replace(channel);
+    Ok(())
+}
+
+/// 获取当前语音频道
+pub(super) fn get_current_voice_channel()->crate::Result<GuildChannel>{
+    CURRENT_JOIN_CHANNEL.access().clone().context("当前没有加入任何语音频道")
 }
