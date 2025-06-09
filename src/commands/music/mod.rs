@@ -19,7 +19,7 @@ use music_continue::music_continue;
 use pause::pause;
 use play::play;
 use stop::stop;
-use volume::set_volume;
+use volume::{set_volume, show_volume};
 
 /// 音乐相关命令
 #[poise::command(
@@ -31,6 +31,7 @@ use volume::set_volume;
         "stop",
         "pause",
         "set_volume",
+        "show_volume",
         "music_continue"
     )
 )]
