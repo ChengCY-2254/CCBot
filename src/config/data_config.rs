@@ -65,7 +65,7 @@ impl DataConfig {
 }
 
 lazy_static! {
-    pub static ref GLOBAL_CONFIG_MANAGER: GlobalConfigManager = GlobalConfigManager::new()
+    pub static ref APP_STATE_MANAGER: GlobalConfigManager = GlobalConfigManager::new()
         .map_err(|e| {
             log::error!("Error loading data: {:?}", e);
             anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
@@ -95,11 +95,11 @@ impl GlobalConfigManager {
         }
     }
 
-    pub fn get_global_data(&self) -> Arc<Data> {
+    pub fn get_app_state(&self) -> Arc<Data> {
         Arc::clone(&self.inner)
     }
     
-     pub fn save(&self)->crate::Result<()> {
+    pub fn save(&self) -> crate::Result<()> {
         self.inner.access().save_to_config()
     }
 }

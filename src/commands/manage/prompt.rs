@@ -1,13 +1,11 @@
-use crate::keys::BotDataKey;
-use crate::utils::create_ephemeral_reply;
 use crate::PoiseContext;
-use anyhow::Context;
+use crate::config::data_config::APP_STATE_MANAGER;
+use crate::utils::create_ephemeral_reply;
 use futures::Stream;
 use futures::StreamExt;
 use lazy_static::lazy_static;
 use std::ops::Deref;
 use std::path::PathBuf;
-use crate::config::data_config::GLOBAL_CONFIG_MANAGER;
 
 lazy_static! {
     static ref CONFIG_DIR: PathBuf = {
@@ -16,7 +14,6 @@ lazy_static! {
         buf
     };
 }
-
 
 /// 切换系统提示
 /// 自动补全程序需要给出路径下的md文件位置
@@ -42,14 +39,11 @@ pub(super) async fn switch_system_prompt(
 /// 处理系统提示切换逻辑
 async fn handle_switch_prompt(ctx: PoiseContext<'_>, file_name: String) -> crate::Result<()> {
     let (prompt, content) = {
-        let type_map = ctx.serenity_context().data.write().await;
-        let bot_data = type_map
-            .get::<BotDataKey>()
-            .context("app数据目录访问失败")?;
-        let mut bot_data = bot_data.exclusive_access();
-        bot_data.aiconfig.use_others_prompt(&file_name)?;
-        GLOBAL_CONFIG_MANAGER.save()?;
-        let (prompt_name, content) = bot_data.aiconfig.get_system_prompt()?;
+        let app_state = APP_STATE_MANAGER.get_app_state();
+        let mut app_state = app_state.exclusive_access();
+        app_state.aiconfig.use_others_prompt(&file_name)?;
+        APP_STATE_MANAGER.save()?;
+        let (prompt_name, content) = app_state.aiconfig.get_system_prompt()?;
         (prompt_name, content)
     };
     let reply = create_ephemeral_reply(format!("已使用 {} 的提示文件\r\n {}", prompt, content));
@@ -59,11 +53,8 @@ async fn handle_switch_prompt(ctx: PoiseContext<'_>, file_name: String) -> crate
 
 /// 自动补全程序，把config目录下的md文件过滤出来返回给客户端
 async fn handle_show_prompt(ctx: PoiseContext<'_>) -> crate::Result<()> {
-    let type_map = ctx.serenity_context().data.read().await;
-    let bot_data = type_map
-        .get::<BotDataKey>()
-        .context("app数据目录访问失败")?;
-    let (prompt, content) = bot_data.access().aiconfig.get_system_prompt()?;
+    let app_state = APP_STATE_MANAGER.get_app_state();
+    let (prompt, content) = app_state.access().aiconfig.get_system_prompt()?;
     let reply = create_ephemeral_reply(format!("已使用 {} 的提示文件\r\n > {}", prompt, content));
     ctx.send(reply).await?;
     Ok(())
@@ -73,7 +64,7 @@ async fn handle_show_prompt(ctx: PoiseContext<'_>) -> crate::Result<()> {
 async fn autocomplete_ai_prompt_list(
     _ctx: PoiseContext<'_>,
     partial: &str,
-) -> impl Stream<Item=String> {
+) -> impl Stream<Item = String> {
     let files = std::fs::read_dir(CONFIG_DIR.deref()).unwrap();
     let names = files
         .into_iter()

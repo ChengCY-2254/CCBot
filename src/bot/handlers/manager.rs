@@ -1,6 +1,6 @@
 //!这个模块用于处理消息撤回
 
-use crate::keys::BotDataKey;
+use crate::config::data_config::APP_STATE_MANAGER;
 use poise::async_trait;
 use serenity::all::{Context, EventHandler, Message};
 
@@ -14,21 +14,21 @@ impl EventHandler for ManagerHandler {
             return;
         }
         let channel_id = new_message.channel_id;
-        let app_data_lock = ctx.data.read().await;
-        if let Some(app_data) = app_data_lock.get::<BotDataKey>() {
-            let channel_name = new_message.channel_id.name(&ctx).await.unwrap();
-            let need_to_withdraw = app_data.access().monitored_channels.contains(&channel_id);
-            if need_to_withdraw {
-                log::trace!(
-                    "获取到需要撤回的消息: {} 频道 {}",
-                    new_message.content,
-                    channel_name
-                );
-                if let Err(why) = new_message.delete(&ctx).await {
-                    log::error!("Error deleting message: {:?}", why);
-                }
-                log::trace!("已删除消息: {} 频道 {}", new_message.content, channel_name);
+        let app_state = APP_STATE_MANAGER.get_app_state();
+        let channel_name = new_message.channel_id.name(&ctx).await.unwrap();
+        //如果在监控的频道中
+        let need_to_withdraw = app_state.access().monitored_channels.contains(&channel_id);
+        if need_to_withdraw {
+            log::trace!(
+                "获取到需要撤回的消息: {} 频道 {}",
+                new_message.content,
+                channel_name
+            );
+            //删除消息
+            if let Err(why) = new_message.delete(&ctx).await {
+                log::error!("Error deleting message: {:?}", why);
             }
+            log::trace!("已删除消息: {} 频道 {}", new_message.content, channel_name);
         }
     }
 }

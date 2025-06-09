@@ -3,7 +3,8 @@
     unused_variables,
     unused_parens,
     unused_qualifications,
-    missing_docs
+    missing_docs,
+    deprecated
 )]
 //! # 定义CCBot的🤖相关
 #[macro_use]
@@ -17,8 +18,7 @@ pub mod utils;
 #[cfg(feature = "yt-dlp")]
 mod yt_dlp;
 
-use crate::config::data_config::GLOBAL_CONFIG_MANAGER;
-use crate::keys::BotDataKey;
+use crate::config::data_config::APP_STATE_MANAGER;
 use crate::keys::HttpKey;
 use crate::shared::UpSafeCell;
 pub use anyhow::Result;
@@ -53,9 +53,11 @@ pub async fn run(token: String) -> Result<()> {
         GatewayIntents::DIRECT_MESSAGES;
     let http_client = reqwest::Client::new();
 
-    let data = GLOBAL_CONFIG_MANAGER.get_global_data();
     // 初始化命令框架
-    let frame_work = { frame_work(data.access().owners.clone()) };
+    let frame_work = {
+        let data = APP_STATE_MANAGER.get_app_state();
+        frame_work(data.access().owners.clone())
+    };
 
     let mut client = {
         #[allow(unused_mut)]
@@ -66,8 +68,7 @@ pub async fn run(token: String) -> Result<()> {
             .event_handler(bot::handlers::StartHandler)
             .event_handler(bot::handlers::ClearHandler)
             .framework(frame_work)
-            .type_map_insert::<HttpKey>(http_client)
-            .type_map_insert::<BotDataKey>(data);
+            .type_map_insert::<HttpKey>(http_client);
 
         client.await?
     };

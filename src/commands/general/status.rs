@@ -1,12 +1,10 @@
+use crate::config::data_config::APP_STATE_MANAGER;
 use crate::PoiseContext;
-use crate::keys::BotDataKey;
-use anyhow::Context;
 use futures::Stream;
 use futures::StreamExt;
 use poise::CreateReply;
 use serenity::all::ActivityData;
 use tracing::instrument;
-use crate::config::data_config::GLOBAL_CONFIG_MANAGER;
 
 ///机器人状态转换命令
 #[poise::command(
@@ -29,12 +27,9 @@ pub(super) async fn set_status(
     let activity_data = match_activity_type(&activity_type,activity_name,url);
     {
         ctx.serenity_context().set_activity(Some(activity_data.clone()));
-        let type_map = ctx.serenity_context().data.write().await;
-        let bot_data = type_map.get::<BotDataKey>();
-        let mut bot_data = bot_data.context("app数据目录访问失败")?.exclusive_access();
-        bot_data.bot_activity = crate::config::ActivityData::from(activity_data);
-        GLOBAL_CONFIG_MANAGER.save()?;
-        
+        let app_state = APP_STATE_MANAGER.get_app_state();
+        app_state.exclusive_access().bot_activity = crate::config::ActivityData::from(activity_data);
+        APP_STATE_MANAGER.save()?;
     }
     //发送仅自己可见的消息
     let reply = CreateReply::default().ephemeral(true).content("状态已更新");

@@ -1,6 +1,6 @@
 use crate::HttpKey;
-use crate::keys::BotDataKey;
-use anyhow::{Context as AnyHowContext, anyhow};
+use crate::config::data_config::APP_STATE_MANAGER;
+use anyhow::anyhow;
 use serenity::all::{EditMessage, GetMessages, Message};
 use serenity::async_trait;
 use serenity::prelude::{Context, EventHandler};
@@ -72,16 +72,7 @@ impl AiHandler {
         );
         let mut interval = tokio::time::interval(Duration::from_secs(4));
         let http_client = ctx.data.read().await.get::<HttpKey>().cloned().unwrap();
-        let aiconfig = {
-            ctx.data
-                .read()
-                .await
-                .get::<BotDataKey>()
-                .context("获取Bot配置文件出现异常")?
-                .access()
-                .aiconfig
-                .clone()
-        };
+        let aiconfig = { APP_STATE_MANAGER.get_app_state().access().aiconfig.clone() };
         log::info!("开始向服务器请求回复");
         let result = tokio::select! {
             result = aiconfig.chat(&http_client, content, history,is_private_chat)=>{

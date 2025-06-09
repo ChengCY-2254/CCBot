@@ -1,9 +1,8 @@
-use crate::keys::BotDataKey;
 use crate::utils::create_ephemeral_reply;
 use crate::PoiseContext;
 use anyhow::{anyhow, Context};
 use serenity::all::{CreateMessage, GuildChannel, MessageBuilder};
-use crate::config::data_config::GLOBAL_CONFIG_MANAGER;
+use crate::config::data_config::APP_STATE_MANAGER;
 
 #[poise::command(
     slash_command,
@@ -45,11 +44,8 @@ pub(super) async fn remove(
 /// 查看当前禁止留存消息的频道
 pub(super) async fn list(ctx: PoiseContext<'_>) -> crate::Result<()> {
     let channel_vec = {
-        let type_map = ctx.serenity_context().data.read().await;
-        let bot_data = type_map
-            .get::<BotDataKey>()
-            .context("机器人数据文件访问失败")?;
-        bot_data.access().monitored_channels.clone()
+        let app_state = APP_STATE_MANAGER.get_app_state();
+        app_state.access().monitored_channels.clone()
     };
 
     if channel_vec.is_empty() {
@@ -72,14 +68,13 @@ pub(super) async fn list(ctx: PoiseContext<'_>) -> crate::Result<()> {
 
 async fn handle_add(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Result<()> {
     let (already_exists, _) = {
-        let type_map = ctx.serenity_context().data.write().await;
-        let data = type_map.get::<BotDataKey>();
-        let mut data = data.context("app数据目录访问失败")?.exclusive_access();
+        let app_state = APP_STATE_MANAGER.get_app_state();
+        let mut data = app_state.exclusive_access();
         let exists = data.monitored_channels.contains(&channel.id);
         let name = channel.name.clone();
         if !exists {
             data.add_monitored_channel(channel.id);
-            GLOBAL_CONFIG_MANAGER.save()?;
+            APP_STATE_MANAGER.save()?;
         }
         (exists, name)
     };
@@ -104,14 +99,13 @@ async fn handle_add(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Resu
 }
 async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Result<()> {
     let (exists, _) = {
-        let type_map = ctx.serenity_context().data.write().await;
-        let data = type_map.get::<BotDataKey>();
-        let mut data = data.context("app数据目录访问失败")?.exclusive_access();
+        let app_state = APP_STATE_MANAGER.get_app_state();
+        let mut data = app_state.exclusive_access();
         let exists = data.monitored_channels.contains(&channel.id);
         let name = channel.name.clone();
         if exists {
             data.remove_monitored_channel(channel.id);
-            GLOBAL_CONFIG_MANAGER.save()?;
+            APP_STATE_MANAGER.save()?;
         }
         (exists, name)
     };
