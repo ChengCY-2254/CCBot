@@ -7,9 +7,6 @@ use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use serenity::all::{ActivityType, Message};
 
-/// 机器人需要保存的配置类型
-pub type Data = UpSafeCell<data_config::DataConfig>;
-
 lazy_static! {
     /// 系统提示
     static ref SYS_USER_PTOMPT_MESSAGE: AIMessage =

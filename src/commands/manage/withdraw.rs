@@ -1,8 +1,8 @@
-use crate::utils::create_ephemeral_reply;
 use crate::PoiseContext;
-use anyhow::{anyhow, Context};
-use serenity::all::{CreateMessage, GuildChannel, MessageBuilder};
 use crate::config::data_config::APP_STATE_MANAGER;
+use crate::utils::create_ephemeral_reply;
+use anyhow::{Context, anyhow};
+use serenity::all::{CreateMessage, GuildChannel, MessageBuilder};
 
 #[poise::command(
     slash_command,
@@ -74,12 +74,12 @@ async fn handle_add(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::Resu
         let name = channel.name.clone();
         if !exists {
             data.add_monitored_channel(channel.id);
-            APP_STATE_MANAGER.save()?;
         }
         (exists, name)
     };
 
     if already_exists {
+        APP_STATE_MANAGER.save()?;
         let response = create_ephemeral_reply(format!("频道 <#{}> 已经在撤回列表中", channel.id));
         ctx.send(response).await?;
     } else {
@@ -105,12 +105,12 @@ async fn handle_remove(ctx: PoiseContext<'_>, channel: GuildChannel) -> crate::R
         let name = channel.name.clone();
         if exists {
             data.remove_monitored_channel(channel.id);
-            APP_STATE_MANAGER.save()?;
         }
         (exists, name)
     };
 
     if exists {
+        APP_STATE_MANAGER.save()?;
         let response =
             create_ephemeral_reply(format!("已将频道 <#{}> 从撤回列表中移除", channel.id));
         let announcement = format!(

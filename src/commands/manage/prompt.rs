@@ -42,10 +42,10 @@ async fn handle_switch_prompt(ctx: PoiseContext<'_>, file_name: String) -> crate
         let app_state = APP_STATE_MANAGER.get_app_state();
         let mut app_state = app_state.exclusive_access();
         app_state.aiconfig.use_others_prompt(&file_name)?;
-        APP_STATE_MANAGER.save()?;
         let (prompt_name, content) = app_state.aiconfig.get_system_prompt()?;
         (prompt_name, content)
     };
+    APP_STATE_MANAGER.save()?;
     let reply = create_ephemeral_reply(format!("已使用 {} 的提示文件\r\n {}", prompt, content));
     ctx.send(reply).await?;
     Ok(())

@@ -1,6 +1,6 @@
 //! 机器人配置文件
 
-use crate::config::{ActivityData, Data, ai_config};
+use crate::config::{ActivityData, ai_config};
 use crate::shared::UpSafeCell;
 use crate::utils::read_file;
 use lazy_static::lazy_static;
@@ -9,6 +9,18 @@ use serenity::all::{ChannelId, UserId};
 use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
+
+/// 机器人需要保存的配置类型
+pub type Data = UpSafeCell<DataConfig>;
+
+lazy_static! {
+    pub static ref APP_STATE_MANAGER: GlobalConfigManager = GlobalConfigManager::new()
+        .map_err(|e| {
+            log::error!("Error loading data: {:?}", e);
+            anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
+        })
+        .unwrap();
+}
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 #[serde(deny_unknown_fields)]
@@ -64,15 +76,6 @@ impl DataConfig {
     }
 }
 
-lazy_static! {
-    pub static ref APP_STATE_MANAGER: GlobalConfigManager = GlobalConfigManager::new()
-        .map_err(|e| {
-            log::error!("Error loading data: {:?}", e);
-            anyhow::anyhow!("Error loading data from config/data.json because: {}", e)
-        })
-        .unwrap();
-}
-
 /// 全局配置管理器，不用库自带的管理器。
 /// 在管理器中创建并读取配置文件，然后通过管理器将配置文件映射出去。
 /// 该管理器将采用LazyStatic进行初始化，然后通过get_global_data获取数据。
@@ -99,6 +102,7 @@ impl GlobalConfigManager {
         Arc::clone(&self.inner)
     }
     
+    /// 保存数据需要注意把之前借用的数据释放掉
     pub fn save(&self) -> crate::Result<()> {
         self.inner.access().save_to_config()
     }
