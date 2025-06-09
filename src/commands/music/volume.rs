@@ -53,7 +53,7 @@ async fn set_volume_handle(ctx: PoiseContext<'_>, volume: f32) -> crate::Result<
 }
 
 async fn show_volume(ctx: PoiseContext<'_>) -> crate::Result<()> {
-    let volume = APP_STATE_MANAGER.get_app_state().access().volume;
+    let volume = APP_STATE_MANAGER.get_app_state().access().volume*100.0;
     let volume_message = format!("当前音量为: **{}**", volume);
     ctx.say(volume_message).await?;
     Ok(())

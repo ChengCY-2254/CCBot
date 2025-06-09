@@ -45,7 +45,7 @@ pub(super) async fn play(
         let track_handle =
             handler.play_input(YoutubeDl::new(http_client, source_url.clone()).into());
         
-        let chinese_time = super::utils::format_chinese_time(duration.as_secs());
+        let chinese_time = super::utils::format_chinese_time(duration);
 
         super::utils::set_track_handle(track_handle);
 

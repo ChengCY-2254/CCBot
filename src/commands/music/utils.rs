@@ -13,6 +13,7 @@ use songbird::tracks::TrackHandle;
 use std::ops::Deref;
 use std::pin::Pin;
 use std::sync::Arc;
+use std::time::Duration;
 
 lazy_static! {
     /// 当前播放的TrackHandle
@@ -121,13 +122,20 @@ pub(super) fn clear_voice_channel() {
 }
 
 /// 格式化时间
-pub(super) fn format_chinese_time(secs: u64) -> String {
-    let secs = secs % 60;
-    let mins = (secs / 60) % 60;
+/// xx小时xx分xx秒
+pub(super) fn format_chinese_time(duration: Duration) -> String {
+    let secs = duration.as_secs();
     let hours = secs / 3600;
+    let minutes = (secs % 3600) / 60;
+    let seconds = secs % 60;
+
     if hours < 1 {
-        format!("{:02}:{:02}", mins, secs)
+        if minutes > 0 {
+            format!("{}分{}秒", minutes, seconds)
+        } else {
+            format!("{}秒", seconds)
+        }
     } else {
-        format!("{:02}:{:02}:{:02}", hours, mins, secs)
+        format!("{}小时{}分{}秒", hours, minutes, seconds)
     }
 }
