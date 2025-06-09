@@ -19,7 +19,7 @@ pub(super) async fn join(
 
     let manager = songbird::get(ctx.serenity_context())
         .await
-        .with_context(|| "语音客户端初始化中")?
+        .context("语音客户端初始化中")?
         .clone();
     let handler_lock = manager.join(guild_id, channel_id).await?;
     {

@@ -5,7 +5,7 @@ use crate::shared::UpSafeCell;
 use crate::utils::read_file;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use serenity::all::{ChannelId, UserId};
+use serenity::all::{ChannelId, GuildChannel, UserId};
 use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
@@ -40,6 +40,8 @@ pub struct DataConfig {
     pub owners: HashSet<UserId>,
     /// 机器人的活动
     pub bot_activity: ActivityData,
+    /// 当前正在播放的频道
+    pub current_voice_channel:Option<GuildChannel>
 }
 
 impl DataConfig {
@@ -101,7 +103,7 @@ impl GlobalConfigManager {
     pub fn get_app_state(&self) -> Arc<Data> {
         Arc::clone(&self.inner)
     }
-    
+
     /// 保存数据需要注意把之前借用的数据释放掉
     pub fn save(&self) -> crate::Result<()> {
         self.inner.access().save_to_config()
