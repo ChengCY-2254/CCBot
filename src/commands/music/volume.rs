@@ -40,16 +40,13 @@ async fn set_volume_handle(ctx: PoiseContext<'_>, volume: f32) -> crate::Result<
     APP_STATE_MANAGER.save()?;
 
     let track_handle = super::utils::get_current_track_handle();
+    // 如果有音乐在播放，那么就调整当前播放音量
     if let Some(track_handle) = track_handle {
         track_handle.set_volume(volume)?;
-        let response = format!("当前播放音量是 {}", raw_volume);
-        ctx.reply(response)
-            .await
-            .map_err(|why| anyhow!("响应时发生错误 {why}"))?;
-    } else {
-        ctx.reply("没有在播放音乐，无法设置音量")
-            .await
-            .map_err(|why| anyhow!("响应时发生错误 {why}"))?;
     }
+    let response = format!("当前播放音量是 {}", raw_volume);
+    ctx.reply(response)
+        .await
+        .map_err(|why| anyhow!("响应时发生错误 {why}"))?;
     Ok(())
 }
