@@ -88,11 +88,12 @@ where
 
 ///  设置当前语音频道
 pub(super) fn set_current_voice_channel(channel: GuildChannel) -> crate::Result<()> {
-    let app_state = APP_STATE_MANAGER.get_app_state();
-    app_state
-        .exclusive_access()
-        .current_voice_channel
-        .replace(channel);
+    {
+        let app_state = APP_STATE_MANAGER.get_app_state();
+        let mut app_state = app_state.exclusive_access();
+        app_state.current_voice_channel.replace(channel);
+    }
+    APP_STATE_MANAGER.save()?;
     Ok(())
 }
 
@@ -108,6 +109,9 @@ pub(super) fn get_current_voice_channel() -> crate::Result<GuildChannel> {
 
 /// 删除当前语音频道
 pub(super) fn clear_voice_channel() {
-    let app_state = APP_STATE_MANAGER.get_app_state();
-    app_state.exclusive_access().current_voice_channel.take();
+    {
+        let app_state = APP_STATE_MANAGER.get_app_state();
+        app_state.exclusive_access().current_voice_channel.take();    
+    }
+    APP_STATE_MANAGER.save().unwrap();
 }
