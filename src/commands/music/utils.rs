@@ -121,8 +121,9 @@ pub(super) fn clear_voice_channel() {
     APP_STATE_MANAGER.save().unwrap();
 }
 
-/// 格式化时间
-/// xx小时xx分xx秒
+/// 格式化时间  
+/// xx小时xx分xx秒  
+/// 不足xx小时xx分的默认返回秒
 pub(super) fn format_chinese_time(duration: Duration) -> String {
     let secs = duration.as_secs();
     let hours = secs / 3600;

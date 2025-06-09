@@ -51,7 +51,7 @@ pub(super) async fn play(
 
         log::info!("开始播放 {}", title);
         log::info!("开始响应信息");
-        let response = format!("🎵 开始播放 [{title}]({source_url}) 时长 **{chinese_time}**");
+        let response = format!("🎵 开始播放 [{title}]({source_url})\r\n时长 **{chinese_time}**");
         // 更新频道状态
         update_channel_state(ctx, &title).await?;
 

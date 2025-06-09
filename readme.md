@@ -44,9 +44,9 @@
 rust编译问题请参考rust给出的报错，安装对应的依赖包即可。
 
 从[action](https://github.com/ChengCY-2254/discord_hub_bot/actions)中下载，并将其放到你的部署路径。
-第一次可直接运行`./cc-bot`，会自动创建配置文件夹`config`，并在配置文件夹中创建`ai-config.json`和`.env`文件。
+第一次可直接运行`./cc-bot`，会自动创建配置文件夹`config`，并在配置文件夹中创建`data.json`和`.env`文件。
 需要修改其中的.env文件，填入你的Discord Bot Token和ai-config.json中的配置信息。
-然后运行`./cc-bot`即可。
+运行`./cc-bot`即可。
 
 ## 功能列表
 

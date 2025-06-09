@@ -3,27 +3,17 @@ use crate::config::data_config::APP_STATE_MANAGER;
 use crate::utils::create_ephemeral_reply;
 use futures::Stream;
 use futures::StreamExt;
-use lazy_static::lazy_static;
-use std::ops::Deref;
-use std::path::PathBuf;
-
-lazy_static! {
-    static ref CONFIG_DIR: PathBuf = {
-        let mut buf = PathBuf::new();
-        buf.push("config");
-        buf
-    };
+#[poise::command(
+    slash_command,
+    subcommands("switch_system_prompt", "put_prompt_file", "delete_prompt_file")
+)]
+pub(super) async fn prompt(_ctx: PoiseContext<'_>) -> crate::Result<()> {
+    Ok(())
 }
 
 /// 切换系统提示
 /// 自动补全程序需要给出路径下的md文件位置
-#[poise::command(
-    slash_command,
-    rename = "switch_prompt",
-    required_permissions = "ADMINISTRATOR",
-    default_member_permissions = "ADMINISTRATOR",
-    owners_only
-)]
+#[poise::command(slash_command, rename = "switch", owners_only)]
 pub(super) async fn switch_system_prompt(
     ctx: PoiseContext<'_>,
     #[autocomplete = "autocomplete_ai_prompt_list"]
@@ -36,6 +26,43 @@ pub(super) async fn switch_system_prompt(
         handle_show_prompt(ctx).await
     }
 }
+#[poise::command(slash_command, rename = "上传", owners_only)]
+/// 上传一份提示，并存到config目录下
+pub(super) async fn put_prompt_file(
+    ctx: PoiseContext<'_>,
+    #[description = "提示名，不需要带后缀"] role_name: String,
+    #[description = "提示内容"] content: String,
+) -> crate::Result<()> {
+    // 要检查config目录下是否有相同文件
+    // 创建文件
+    // 检查file_name是否符合格式
+    if !role_name.ends_with(".md") {
+        return Err(anyhow::anyhow!("角色名不符合要求"));
+    }
+    // 预检查config目录下是否有相同文件
+    let file_path = format!("config/{}.md", role_name);
+    if std::fs::metadata(&file_path).is_ok() {
+        return Err(anyhow::anyhow!("文件已存在"));
+    }
+    std::fs::write(file_path, content)?;
+    ctx.reply("上传成功").await?;
+    Ok(())
+}
+
+#[poise::command(slash_command, rename = "删除", owners_only)]
+pub(super) async fn delete_prompt_file(
+    ctx: PoiseContext<'_>,
+    #[autocomplete = "autocomplete_ai_prompt_list"] file_name: String,
+) -> crate::Result<()> {
+    let file_path = format!("config/{}.md", file_name);
+    if std::fs::remove_file(file_path).is_ok() {
+        ctx.reply("删除成功").await?;
+    } else {
+        ctx.reply("删除失败").await?;
+    }
+    Ok(())
+}
+
 /// 处理系统提示切换逻辑
 async fn handle_switch_prompt(ctx: PoiseContext<'_>, file_name: String) -> crate::Result<()> {
     let (prompt, content) = {
@@ -65,7 +92,7 @@ async fn autocomplete_ai_prompt_list(
     _ctx: PoiseContext<'_>,
     partial: &str,
 ) -> impl Stream<Item = String> {
-    let files = std::fs::read_dir(CONFIG_DIR.deref()).unwrap();
+    let files = std::fs::read_dir("config").unwrap();
     let names = files
         .into_iter()
         .map(|dir| {
