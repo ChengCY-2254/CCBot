@@ -36,7 +36,7 @@ async fn put_prompt_file(
     // 要检查config目录下是否有相同文件
     // 创建文件
     // 检查file_name是否符合格式
-    if !role_name.ends_with(".md") {
+    if role_name.ends_with(".md") {
         return Err(anyhow::anyhow!("角色名不符合要求"));
     }
     // 预检查config目录下是否有相同文件
