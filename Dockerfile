@@ -12,9 +12,14 @@ COPY . .
 RUN cargo build --release
 
 FROM ubuntu:latest
-RUN apt-get update && \
-    apt-get install -y yt-dlp &&\
-    rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && \
+#    apt-get install -y yt-dlp &&\
+#    rm -rf /var/lib/apt/lists/*
+RUN apt-get update &&\
+    apt-get install -y curl python3 &&\
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp &&\
+    chmod a+rx /usr/local/bin/yt-dlp
+# 直接使用yt-dlp镜像
 WORKDIR /app
 COPY --from=builder /app/target/release/cc-bot /app/
 CMD ["/app/cc-bot"]

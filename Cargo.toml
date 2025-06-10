@@ -46,3 +46,14 @@ features = ["all"]
 
 [features]
 yt-dlp = []
+
+[profile.release]
+# https://github.com/microsoft/edit/blob/main/Cargo.toml#L22-L30
+codegen-units = 1
+debug = "full"
+lto = true
+opt-level = "s"
+panic = "abort"
+split-debuginfo = "packed"
+strip = "symbols"
+incremental = true

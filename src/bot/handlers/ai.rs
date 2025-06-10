@@ -17,11 +17,10 @@ impl EventHandler for AiHandler {
         // 判断是否是私聊
         #[allow(deprecated)]
         let is_private_message = new_message.is_private();
-
+        
+        // 忽略私聊，只管理频道消息
         if is_private_message {
-            Self::private_chat_handler(&ctx, &new_message)
-                .await
-                .unwrap();
+            return;
         } else {
             Self::channel_message_handler(&ctx, &new_message)
                 .await
@@ -214,6 +213,8 @@ impl AiHandler {
     }
 
     /// 用户私聊
+    #[deprecated]
+    #[allow(unused)]
     async fn private_chat_handler(ctx: &Context, new_message: &Message) -> crate::Result<()> {
         let user_id = new_message.author.id;
         let bot_id = ctx.cache.current_user().id;

@@ -36,7 +36,7 @@ async fn put_prompt_file(
     // 要检查config目录下是否有相同文件
     // 创建文件
     // 检查file_name是否符合格式
-    if !role_name.ends_with(".md") {
+    if role_name.ends_with(".md") {
         return Err(anyhow::anyhow!("角色名不符合要求"));
     }
     // 预检查config目录下是否有相同文件
@@ -50,15 +50,21 @@ async fn put_prompt_file(
 }
 
 #[poise::command(slash_command, rename = "删除", owners_only)]
- async fn delete_prompt_file(
+/// 删除角色
+async fn delete_prompt_file(
     ctx: PoiseContext<'_>,
-    #[autocomplete = "autocomplete_ai_prompt_list"] file_name: String,
+    #[description = "角色名"]
+    #[autocomplete = "autocomplete_ai_prompt_list"]
+    file_name: String,
 ) -> crate::Result<()> {
-    let file_path = format!("config/{}.md", file_name);
+    if !file_name.ends_with(".md") {
+        return Err(anyhow::anyhow!("文件名不符合要求，需以.md结尾"));
+    }
+    let file_path = format!("config/{}", file_name);
     if std::fs::remove_file(file_path).is_ok() {
-        ctx.reply("删除成功").await?;
+        ctx.reply(format!("删除**{file_name}**成功")).await?;
     } else {
-        ctx.reply("删除失败").await?;
+        ctx.reply(format!("删除**{file_name}**失败")).await?;
     }
     Ok(())
 }
