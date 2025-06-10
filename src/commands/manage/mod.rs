@@ -9,11 +9,11 @@
 mod withdraw;
 mod send_message;
 mod prompt;
-use crate::commands::manage::prompt::switch_system_prompt;
+use crate::commands::manage::prompt::prompt;
 use crate::commands::manage::send_message::send_message;
 use crate::commands::manage::withdraw::withdraw;
 use crate::macros::ExportCommand;
 
 pub fn manage_export() -> ExportCommand {
-    vec![withdraw(), switch_system_prompt(), send_message()]
+    vec![withdraw(), prompt(), send_message()]
 }

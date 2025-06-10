@@ -14,7 +14,7 @@ pub(super) async fn prompt(_ctx: PoiseContext<'_>) -> crate::Result<()> {
 /// 切换系统提示
 /// 自动补全程序需要给出路径下的md文件位置
 #[poise::command(slash_command, rename = "switch", owners_only)]
-pub(super) async fn switch_system_prompt(
+async fn switch_system_prompt(
     ctx: PoiseContext<'_>,
     #[autocomplete = "autocomplete_ai_prompt_list"]
     #[description = "角色"]
@@ -28,7 +28,7 @@ pub(super) async fn switch_system_prompt(
 }
 #[poise::command(slash_command, rename = "上传", owners_only)]
 /// 上传一份提示，并存到config目录下
-pub(super) async fn put_prompt_file(
+async fn put_prompt_file(
     ctx: PoiseContext<'_>,
     #[description = "提示名，不需要带后缀"] role_name: String,
     #[description = "提示内容"] content: String,
@@ -50,7 +50,7 @@ pub(super) async fn put_prompt_file(
 }
 
 #[poise::command(slash_command, rename = "删除", owners_only)]
-pub(super) async fn delete_prompt_file(
+ async fn delete_prompt_file(
     ctx: PoiseContext<'_>,
     #[autocomplete = "autocomplete_ai_prompt_list"] file_name: String,
 ) -> crate::Result<()> {
