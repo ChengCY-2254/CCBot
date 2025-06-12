@@ -1,4 +1,15 @@
 FROM ubuntu:latest AS builder
+RUN rm /etc/apt/sources.list && \
+    echo "deb https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
+          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
+          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
+          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
+          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse" > /etc/apt/sources.list
 RUN apt-get update && \
     apt-get install -y cmake gcc curl pkg-config libssl-dev git &&\
     rm -rf  /var/lib/apt/lists/*
@@ -13,7 +24,17 @@ RUN cargo build --release
 
 FROM ubuntu:latest
 # 使用腾讯源
-RUN echo "deb http://mirrors.cloud.tencent.com/ubuntu/ focal main restricted universe multiverse" > /etc/apt/sources.list
+RUN rm /etc/apt/sources.list && \
+    echo "deb https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
+          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
+          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
+          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
+          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse &&\
+          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse" > /etc/apt/sources.list
 RUN apt-get update && \
     apt-get install -y yt-dlp &&\
     rm -rf /var/lib/apt/lists/*
