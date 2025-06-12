@@ -22,22 +22,24 @@ RUN cargo build --release # 下载依赖并预构建
 COPY . .
 RUN cargo build --release
 
-FROM ubuntu:latest
-# 使用腾讯源
-RUN rm /etc/apt/sources.list && \
-    echo "deb https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
-          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
-          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
-          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
-          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse" > /etc/apt/sources.list
-RUN apt-get update && \
-    apt-get install -y yt-dlp &&\
-    rm -rf /var/lib/apt/lists/*
+#FROM ubuntu:latest
+## 使用腾讯源
+#RUN rm /etc/apt/sources.list && \
+#    echo "deb https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
+#          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
+#          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
+#          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
+#          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
+#          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
+#          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
+#          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
+#          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse &&\
+#          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse" > /etc/apt/sources.list
+#RUN apt-get update && \
+#    apt-get install -y yt-dlp &&\
+#    rm -rf /var/lib/apt/lists/*
+# 直接使用yt-dlp镜像
+FROM jauderho/yt-dlp
 WORKDIR /app
 COPY --from=builder /app/target/release/cc-bot /app/
 CMD ["/app/cc-bot"]
