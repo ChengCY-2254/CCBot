@@ -1,15 +1,4 @@
 FROM ubuntu:latest AS builder
-RUN rm /etc/apt/sources.list && \
-    echo "deb https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy main restricted universe multiverse &&\
-          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-security main restricted universe multiverse &&\
-          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-updates main restricted universe multiverse &&\
-          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-proposed main restricted universe multiverse &&\
-          deb https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse &&\
-          deb-src https://mirrors.cloud.tencent.com/ubuntu/ jammy-backports main restricted universe multiverse" > /etc/apt/sources.list
 RUN apt-get update && \
     apt-get install -y cmake gcc curl pkg-config libssl-dev git &&\
     rm -rf  /var/lib/apt/lists/*
@@ -27,7 +16,7 @@ FROM ubuntu:latest
 #    apt-get install -y yt-dlp &&\
 #    rm -rf /var/lib/apt/lists/*
 RUN apt-get update &&\
-    apt-get install -y curl &&\
+    apt-get install -y curl python3 &&\
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp &&\
     chmod a+rx /usr/local/bin/yt-dlp
 # 直接使用yt-dlp镜像
