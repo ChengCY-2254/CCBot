@@ -12,6 +12,8 @@ COPY . .
 RUN cargo build --release
 
 FROM ubuntu:latest
+# 使用腾讯源
+RUN echo "deb http://mirrors.cloud.tencent.com/ubuntu/ focal main restricted universe multiverse" > /etc/apt/sources.list
 RUN apt-get update && \
     apt-get install -y yt-dlp &&\
     rm -rf /var/lib/apt/lists/*
